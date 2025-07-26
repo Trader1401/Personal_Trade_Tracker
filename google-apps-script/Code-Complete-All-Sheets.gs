@@ -8,7 +8,7 @@
 
 // Configuration - Update SPREADSHEET_ID with your actual Google Sheets ID
 const CONFIG = {
-  SPREADSHEET_ID: '', // IMPORTANT: Replace with your actual Sheet ID from the URL
+  SPREADSHEET_ID: '1RXg9THvQd2WMwVgWH6G4tDuuoGOC59mf5pJGko51mVo', // Your actual Sheet ID
   SHEETS: {
     TRADES: 'Trades',
     STRATEGIES: 'Strategies', 
