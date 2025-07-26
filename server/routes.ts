@@ -60,12 +60,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             validatedTrade.profitLoss = calculatedPnL.toString();
           }
           
+          // Add unique ID and timestamp  
+          (validatedTrade as any).id = Date.now();
+          
           const trade = await storage.createTrade(validatedTrade);
+          
+          // Sync to Google Sheets with duplicate prevention
           try {
-            await googleSheetsClient.syncData({ trades: [trade] });
+            const response = await (googleSheetsClient as any).makeRequest({
+              action: 'addTrade',
+              data: trade
+            });
+            console.log('Trade synced to Google Sheets:', response.success);
           } catch (syncError) {
             console.warn('Trade sync to Google Sheets failed:', syncError);
           }
+          
           result = { data: trade };
           break;
         case 'getStrategies':
@@ -84,12 +94,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result = { data: await storage.getPsychologyEntries() };
           break;
         case 'addPsychologyEntry':
+          // Add unique ID and timestamp
+          (data as any).id = Date.now();
+          
           const psychologyEntry = await storage.createPsychologyEntry(data);
+          
+          // Sync to Google Sheets with duplicate prevention
           try {
-            await googleSheetsClient.syncData({ psychologyEntries: [psychologyEntry] });
+            const response = await (googleSheetsClient as any).makeRequest({
+              action: 'addPsychologyEntry', 
+              data: psychologyEntry
+            });
+            console.log('Psychology entry synced to Google Sheets:', response.success);
           } catch (syncError) {
             console.warn('Psychology entry sync to Google Sheets failed:', syncError);
           }
+          
           result = { data: psychologyEntry };
           break;
         default:

@@ -513,7 +513,7 @@ function initializeTradesSheet(sheet) {
   const headers = [
     'ID', 'Trade Date', 'Stock Name', 'Quantity', 'Entry Price',
     'Exit Price', 'Stop Loss', 'Target Price', 'P&L', 'Setup Followed',
-    'Strategy Used', 'Emotion', 'Trade Notes', 'Psychology Reflections',
+    'Strategy', 'Emotion', 'Trade Notes', 'Psychology Reflections',
     'Screenshot Link', 'Created At'
   ];
   
