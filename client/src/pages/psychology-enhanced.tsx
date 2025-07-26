@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { usePsychologyEntries } from "@/hooks/use-psychology";
+import { usePsychology } from "@/hooks/use-psychology";
 import { useTrades } from "@/hooks/use-trades";
 import { calculateTotalPnL, formatCurrency } from "@/lib/calculations";
 
@@ -31,7 +31,7 @@ type PsychologyForm = z.infer<typeof psychologySchema>;
 
 export default function PsychologyEnhanced() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { psychologyEntries, addPsychologyEntry, isAdding, isLoading } = usePsychologyEntries();
+  const { entries: psychologyEntries, addEntry: addPsychologyEntry, isAdding, isLoading } = usePsychology();
   const { trades } = useTrades();
 
   const form = useForm<PsychologyForm>({
@@ -359,8 +359,8 @@ export default function PsychologyEnhanced() {
           ) : (
             <div className="space-y-6">
               {psychologyEntries
-                .sort((a, b) => b.year - a.year || months.indexOf(b.month) - months.indexOf(a.month))
-                .map((entry) => (
+                .sort((a: any, b: any) => b.year - a.year || months.indexOf(b.month) - months.indexOf(a.month))
+                .map((entry: any) => (
                   <div key={entry.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-4">

@@ -1,6 +1,8 @@
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import PnLChart from "@/components/charts/pnl-chart";
 import WinRateChart from "@/components/charts/win-rate-chart";
 import EquityCurve from "@/components/charts/equity-curve";
@@ -18,6 +20,42 @@ import {
 
 export default function Analytics() {
   const { trades, isLoading } = useTrades();
+  const [timeRange, setTimeRange] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+
+  // Filter trades based on selected time range
+  const filteredTrades = useMemo(() => {
+    if (timeRange === "all") return trades;
+    
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (timeRange) {
+      case "7d":
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "30d":
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case "90d":
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case "1y":
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      case "custom":
+        if (!customStartDate || !customEndDate) return trades;
+        return trades.filter(trade => {
+          const tradeDate = new Date(trade.tradeDate);
+          return tradeDate >= new Date(customStartDate) && tradeDate <= new Date(customEndDate);
+        });
+      default:
+        return trades;
+    }
+    
+    return trades.filter(trade => new Date(trade.tradeDate) >= startDate);
+  }, [trades, timeRange, customStartDate, customEndDate]);
 
   if (isLoading) {
     return (
@@ -41,14 +79,14 @@ export default function Analytics() {
     );
   }
 
-  const totalPnL = calculateTotalPnL(trades);
-  const winRate = calculateWinRate(trades);
-  const avgWin = calculateAverageWin(trades);
-  const avgLoss = calculateAverageLoss(trades);
-  const maxDrawdown = calculateMaxDrawdown(trades);
+  const totalPnL = calculateTotalPnL(filteredTrades);
+  const winRate = calculateWinRate(filteredTrades);
+  const avgWin = calculateAverageWin(filteredTrades);
+  const avgLoss = calculateAverageLoss(filteredTrades);
+  const maxDrawdown = calculateMaxDrawdown(filteredTrades);
   const profitFactor = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : 0;
 
-  const strategyGroups = groupTradesByStrategy(trades);
+  const strategyGroups = groupTradesByStrategy(filteredTrades);
   const strategyPerformance = Object.entries(strategyGroups).map(([strategy, strategyTrades]) => ({
     strategy,
     trades: strategyTrades.length,
@@ -94,17 +132,37 @@ export default function Analytics() {
         </div>
         
         <div className="flex items-center space-x-2">
-          <Select defaultValue="all">
+          <Select defaultValue="all" onValueChange={(value) => setTimeRange(value)}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
               <SelectItem value="30d">Last 30 Days</SelectItem>
               <SelectItem value="90d">Last 90 Days</SelectItem>
               <SelectItem value="1y">Last Year</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
             </SelectContent>
           </Select>
+          
+          {timeRange === 'custom' && (
+            <div className="flex items-center space-x-2">
+              <Input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="w-36"
+              />
+              <span className="text-gray-500">to</span>
+              <Input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="w-36"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -124,12 +182,12 @@ export default function Analytics() {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <PnLChart trades={trades} />
-        <WinRateChart trades={trades} />
+        <PnLChart trades={filteredTrades} />
+        <WinRateChart trades={filteredTrades} />
       </div>
 
       <div className="grid grid-cols-1 gap-8 mb-8">
-        <EquityCurve trades={trades} />
+        <EquityCurve trades={filteredTrades} />
       </div>
 
       {/* Strategy Performance */}
