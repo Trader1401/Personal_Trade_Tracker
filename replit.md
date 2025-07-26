@@ -36,6 +36,7 @@ Preferred communication style: Simple, everyday language.
 - **Data Flow**: Fast response with proper data retrieval and storage
 - **Dark Mode**: All text visible with proper contrast, profit/loss colors working correctly
 - **Export Functionality**: Complete CSV export with all trade data and psychology entries
+- **Netlify Deployment**: FIXED - Static build configuration with proper redirects and dist folder structure
 
 ## System Architecture
 

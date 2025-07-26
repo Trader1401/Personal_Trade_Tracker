@@ -1,30 +1,18 @@
-# Netlify configuration for IntraDay Trading Dashboard
+# Netlify configuration for IntraDay Trading Dashboard - Static Deployment
 
 [build]
-  # Command to build the application
-  command = "./build.sh"
+  # Command to build the static application
+  command = "./build-static.sh"
   
-  # Directory containing the built files
-  publish = "dist/public"
+  # Directory containing the built files (frontend only for static hosting)
+  publish = "dist"
   
   # Environment variables for build
   [build.environment]
     NODE_ENV = "production"
     NODE_VERSION = "20"
 
-[functions]
-  # External node modules to include in functions
-  external_node_modules = ["express", "cors"]
-  
-  # Function directory
-  directory = "dist"
-
-# Single Page Application redirect rules
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/index/:splat"
-  status = 200
-  
+# Single Page Application redirect rules for React Router
 [[redirects]]
   from = "/*"
   to = "/index.html"
