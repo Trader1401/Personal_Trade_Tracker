@@ -1,98 +1,77 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PsychologyEntry } from "@shared/schema";
-import { GoogleSheetsAPI } from "@/lib/google-sheets";
-import { useAppContext } from "@/contexts/app-context";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// Psychology Entry type
+export interface PsychologyEntry {
+  id: number;
+  month: string;
+  year: number;
+  monthlyPnL: string | null;
+  bestTradeId: number | null;
+  worstTradeId: number | null;  
+  mentalReflections: string;
+  improvementAreas: string;
+  createdAt: Date;
+}
+
+// Insert schema type
+export interface InsertPsychologyEntry {
+  month: string;
+  year: number;
+  monthlyPnL?: string;
+  bestTradeId?: number;
+  worstTradeId?: number;
+  mentalReflections: string;
+  improvementAreas: string;
+}
 
 export function usePsychologyEntries() {
-  const { settings } = useAppContext();
-  const { toast } = useToast();
+  return useQuery({
+    queryKey: ['/api/psychology-entries'],
+    queryFn: async (): Promise<PsychologyEntry[]> => {
+      const response = await fetch('/api/psychology-entries');
+      if (!response.ok) {
+        throw new Error('Failed to fetch psychology entries');
+      }
+      const data = await response.json();
+      return data.data || [];
+    },
+  });
+}
+
+export function useAddPsychologyEntry() {
   const queryClient = useQueryClient();
-
-  const api = settings ? new GoogleSheetsAPI(settings.googleScriptUrl || "", settings.googleSheetId || "") : null;
-
-  const query = useQuery({
-    queryKey: ["psychologyEntries"],
-    queryFn: async () => {
-      if (!api) throw new Error("Google Sheets not configured");
-      return api.getPsychologyEntries();
-    },
-    enabled: !!api,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  const addPsychologyEntryMutation = useMutation({
-    mutationFn: async (entry: Omit<PsychologyEntry, "id" | "createdAt">) => {
-      if (!api) throw new Error("Google Sheets not configured");
-      return api.addPsychologyEntry(entry);
+  
+  return useMutation({
+    mutationFn: async (entry: InsertPsychologyEntry): Promise<PsychologyEntry> => {
+      const response = await fetch('/api/psychology-entries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(entry),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add psychology entry');
+      }
+      
+      const data = await response.json();
+      return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["psychologyEntries"] });
-      toast({
-        title: "Success",
-        description: "Psychology entry added successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['/api/psychology-entries'] });
     },
   });
+}
 
-  const updatePsychologyEntryMutation = useMutation({
-    mutationFn: async ({ id, ...entry }: { id: number } & Partial<PsychologyEntry>) => {
-      if (!api) throw new Error("Google Sheets not configured");
-      return api.updatePsychologyEntry(id, entry);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["psychologyEntries"] });
-      toast({
-        title: "Success",
-        description: "Psychology entry updated successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deletePsychologyEntryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      if (!api) throw new Error("Google Sheets not configured");
-      return api.deletePsychologyEntry(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["psychologyEntries"] });
-      toast({
-        title: "Success",
-        description: "Psychology entry deleted successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+export function usePsychology() {
+  const { data: entries = [], isLoading } = usePsychologyEntries();
+  const addEntryMutation = useAddPsychologyEntry();
 
   return {
-    psychologyEntries: query.data || [],
-    isLoading: query.isLoading,
-    error: query.error,
-    addPsychologyEntry: addPsychologyEntryMutation.mutate,
-    updatePsychologyEntry: updatePsychologyEntryMutation.mutate,
-    deletePsychologyEntry: deletePsychologyEntryMutation.mutate,
-    isAdding: addPsychologyEntryMutation.isPending,
-    isUpdating: updatePsychologyEntryMutation.isPending,
-    isDeleting: deletePsychologyEntryMutation.isPending,
+    entries,
+    isLoading,
+    addEntry: addEntryMutation.mutate,
+    isAdding: addEntryMutation.isPending,
   };
 }

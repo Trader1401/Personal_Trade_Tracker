@@ -46,6 +46,8 @@ const filterSchema = z.object({
 type TradeForm = z.infer<typeof tradeSchema>;
 type FilterForm = z.infer<typeof filterSchema>;
 
+const emotions = ["Confident", "Neutral", "Anxious", "Excited", "Fearful", "Greedy", "Disciplined"];
+
 export default function TradeLogEnhanced() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -130,10 +132,10 @@ export default function TradeLogEnhanced() {
       (!filters.endDate || trade.tradeDate <= filters.endDate);
 
     // Strategy filter
-    const matchesStrategy = !filters.strategy || trade.whichSetup === filters.strategy;
+    const matchesStrategy = !filters.strategy || filters.strategy === 'all-strategies' || trade.whichSetup === filters.strategy;
 
     // Emotion filter
-    const matchesEmotion = !filters.emotion || trade.emotion === filters.emotion;
+    const matchesEmotion = !filters.emotion || filters.emotion === 'all-emotions' || trade.emotion === filters.emotion;
 
     // Profit/Loss filter
     let matchesProfitLoss = true;
@@ -519,9 +521,9 @@ export default function TradeLogEnhanced() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="">All strategies</SelectItem>
+                                  <SelectItem value="all-strategies">All strategies</SelectItem>
                                   {strategies.map((strategy) => (
-                                    <SelectItem key={strategy.id} value={strategy.name}>
+                                    <SelectItem key={strategy.id} value={strategy.name || 'unnamed-strategy'}>
                                       {strategy.name}
                                     </SelectItem>
                                   ))}
@@ -545,7 +547,7 @@ export default function TradeLogEnhanced() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="">All emotions</SelectItem>
+                                  <SelectItem value="all-emotions">All emotions</SelectItem>
                                   {emotions.map((emotion) => (
                                     <SelectItem key={emotion} value={emotion}>
                                       {emotion}
