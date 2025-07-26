@@ -71,7 +71,7 @@ export function usePsychology() {
   return {
     entries,
     isLoading,
-    addEntry: addEntryMutation.mutate,
+    addEntry: addEntryMutation.mutateAsync, // Use mutateAsync for promise-based handling
     isAdding: addEntryMutation.isPending,
   };
 }

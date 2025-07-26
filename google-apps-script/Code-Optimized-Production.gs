@@ -43,8 +43,18 @@ const PSYCHOLOGY_HEADERS = [
  */
 function getISTDateTime() {
   const now = new Date();
-  const istTime = new Date(now.getTime() + CONFIG.IST_OFFSET);
-  return istTime.toISOString();
+  // Proper IST calculation: UTC + 5:30
+  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  return istTime.toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
 }
 
 /**
@@ -64,16 +74,19 @@ function formatIndianDate(date) {
  * Format datetime to Indian format
  */
 function formatIndianDateTime(date) {
-  if (!date) return '';
-  const istDate = new Date(typeof date === 'string' ? date : date.getTime() + CONFIG.IST_OFFSET);
+  if (!date) return getISTDateTime();
+  const inputDate = new Date(date);
+  // Convert to IST properly
+  const istDate = new Date(inputDate.getTime() + (5.5 * 60 * 60 * 1000));
   return istDate.toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    timeZone: 'Asia/Kolkata'
+    hour12: false
   });
 }
 
@@ -460,7 +473,7 @@ function handleGetTrades() {
         notes: row[12] || null,
         psychologyReflections: row[13] || null,
         screenshotLink: row[14] || null,
-        createdAt: row[15] ? formatIndianDateTime(new Date(row[15])) : formatIndianDateTime(new Date())
+        createdAt: row[15] ? formatIndianDateTime(new Date(row[15])) : getISTDateTime()
       });
     }
     
@@ -515,7 +528,7 @@ function handleGetStrategies() {
         screenshotUrl: row[3] || null,
         tags: row[4] ? row[4].split(',').map(tag => tag.trim()) : null,
         status: row[5] || 'active',
-        createdAt: row[6] ? formatIndianDateTime(new Date(row[6])) : formatIndianDateTime(new Date())
+        createdAt: row[6] ? formatIndianDateTime(new Date(row[6])) : getISTDateTime()
       });
     }
     
@@ -572,7 +585,7 @@ function handleGetPsychology() {
         worstTradeId: row[5] ? parseInt(row[5]) : null,
         mentalReflections: row[6] || '',
         improvementAreas: row[7] || '',
-        createdAt: row[8] ? formatIndianDateTime(new Date(row[8])) : formatIndianDateTime(new Date())
+        createdAt: row[8] ? formatIndianDateTime(new Date(row[8])) : getISTDateTime()
       });
     }
     
@@ -634,7 +647,7 @@ function createTradeRow(trade) {
   
   return [
     trade.id || Date.now(),
-    trade.tradeDate || formatIndianDate(new Date()),
+    formatIndianDate(trade.tradeDate || new Date()),
     trade.stockName || '',
     quantity,
     entryPrice,
@@ -648,7 +661,7 @@ function createTradeRow(trade) {
     trade.notes || '',
     trade.psychologyReflections || '',
     trade.screenshotLink || '',
-    formatIndianDateTime(new Date())
+    getISTDateTime() // Use proper IST formatting
   ];
 }
 
@@ -660,7 +673,7 @@ function createStrategyRow(strategy) {
     strategy.screenshotUrl || '',
     Array.isArray(strategy.tags) ? strategy.tags.join(',') : (strategy.tags || ''),
     strategy.status || 'active',
-    formatIndianDateTime(new Date())
+    getISTDateTime() // Use proper IST formatting
   ];
 }
 
@@ -674,26 +687,36 @@ function createPsychologyRow(entry) {
     entry.worstTradeId || '',
     entry.mentalReflections || '',
     entry.improvementAreas || '',
-    formatIndianDateTime(new Date())
+    getISTDateTime() // Use proper IST formatting
   ];
 }
 
-// OPTIMIZED duplicate checks with early exit
+// ENHANCED duplicate checks with precise matching
 function isDuplicateTrade(sheet, trade) {
   if (sheet.getLastRow() <= 1) return false;
   
   const data = sheet.getDataRange().getValues();
-  const tradeDate = trade.tradeDate;
-  const stockName = trade.stockName;
-  const quantity = parseFloat(trade.quantity);
-  const entryPrice = parseFloat(trade.entryPrice);
+  const tradeDate = formatDate(trade.tradeDate);
+  const stockName = trade.stockName?.toString().toUpperCase();
+  const quantity = parseFloat(trade.quantity || 0);
+  const entryPrice = parseFloat(trade.entryPrice || 0);
+  const exitPrice = parseFloat(trade.exitPrice || 0);
   
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (row[1] === tradeDate && 
-        row[2] === stockName && 
-        parseFloat(row[3]) === quantity &&
-        parseFloat(row[4]) === entryPrice) {
+    const existingDate = formatDate(row[1]);
+    const existingStock = row[2]?.toString().toUpperCase();
+    const existingQty = parseFloat(row[3] || 0);
+    const existingEntry = parseFloat(row[4] || 0);
+    const existingExit = parseFloat(row[5] || 0);
+    
+    // Enhanced matching: date, stock, quantity, entry price, and exit price
+    if (existingDate === tradeDate && 
+        existingStock === stockName && 
+        Math.abs(existingQty - quantity) < 0.01 &&
+        Math.abs(existingEntry - entryPrice) < 0.01 &&
+        Math.abs(existingExit - exitPrice) < 0.01) {
+      console.log(`Duplicate trade detected: ${stockName} on ${tradeDate}`);
       return true;
     }
   }

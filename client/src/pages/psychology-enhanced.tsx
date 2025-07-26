@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Calendar, TrendingUp, TrendingDown, Target, Brain } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ export default function PsychologyEnhanced() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { entries: psychologyEntries, addEntry: addPsychologyEntry, isAdding, isLoading } = usePsychology();
   const { trades } = useTrades();
+  const { toast } = useToast();
 
   const form = useForm<PsychologyForm>({
     resolver: zodResolver(psychologySchema),
@@ -47,19 +49,35 @@ export default function PsychologyEnhanced() {
     },
   });
 
-  const onSubmit = (data: PsychologyForm) => {
-    addPsychologyEntry({
-      month: data.month,
-      year: data.year,
-      monthlyPnL: data.monthlyPnL?.toString() || null,
-      bestTradeId: data.bestTradeId || null,
-      worstTradeId: data.worstTradeId || null,
-      mentalReflections: data.mentalReflections,
-      improvementAreas: data.improvementAreas,
-    });
+  const onSubmit = async (data: PsychologyForm) => {
+    try {
+      await addPsychologyEntry({
+        month: data.month,
+        year: data.year,
+        monthlyPnL: data.monthlyPnL?.toString(),
+        bestTradeId: data.bestTradeId,
+        worstTradeId: data.worstTradeId,
+        mentalReflections: data.mentalReflections,
+        improvementAreas: data.improvementAreas,
+      });
 
-    form.reset();
-    setIsAddDialogOpen(false);
+      form.reset();
+      setIsAddDialogOpen(false);
+      
+      // Show success message
+      toast({
+        title: "Psychology Entry Added!",
+        description: `${data.month} ${data.year} psychology entry saved successfully.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Failed to add psychology entry:', error);
+      toast({
+        title: "Error Adding Entry",
+        description: "Failed to save psychology entry. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Get current month's statistics
