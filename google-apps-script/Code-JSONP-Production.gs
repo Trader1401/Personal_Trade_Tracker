@@ -8,7 +8,7 @@
 
 // Configuration - Update SPREADSHEET_ID with your actual Google Sheets ID
 const CONFIG = {
-  SPREADSHEET_ID: '1RXg9THvQd2WMwVgWH6G4tDuuoGOC59mf5pJGko51mVo', // Your actual Sheet ID
+  SPREADSHEET_ID: '1W1j2kr8-sebJ4Xfk2AYBgPm9GPN5iavo-eilwvPaUMY', // Your actual Sheet ID
   SHEETS: {
     TRADES: 'Trades',
     STRATEGIES: 'Strategies', 
@@ -117,6 +117,24 @@ function doGet(e) {
       case 'addPsychologyEntry':
         result = handleAddPsychologyEntry({ data });
         break;
+      case 'updateTrade':
+        result = handleUpdateTrade({ data });
+        break;
+      case 'deleteTrade':
+        result = handleDeleteTrade({ data });
+        break;
+      case 'updateStrategy':
+        result = handleUpdateStrategy({ data });
+        break;
+      case 'deleteStrategy':
+        result = handleDeleteStrategy({ data });
+        break;
+      case 'updatePsychologyEntry':
+        result = handleUpdatePsychologyEntry({ data });
+        break;
+      case 'deletePsychologyEntry':
+        result = handleDeletePsychologyEntry({ data });
+        break;
       default:
         result = { success: false, error: 'Unknown action: ' + action };
     }
@@ -178,6 +196,24 @@ function doPost(e) {
         break;
       case 'addPsychologyEntry':
         result = handleAddPsychologyEntry(requestData);
+        break;
+      case 'updateTrade':
+        result = handleUpdateTrade(requestData);
+        break;
+      case 'deleteTrade':
+        result = handleDeleteTrade(requestData);
+        break;
+      case 'updateStrategy':
+        result = handleUpdateStrategy(requestData);
+        break;
+      case 'deleteStrategy':
+        result = handleDeleteStrategy(requestData);
+        break;
+      case 'updatePsychologyEntry':
+        result = handleUpdatePsychologyEntry(requestData);
+        break;
+      case 'deletePsychologyEntry':
+        result = handleDeletePsychologyEntry(requestData);
         break;
       default:
         result = { success: false, error: 'Unknown action: ' + action };
@@ -413,6 +449,171 @@ function handleAddPsychologyEntry(requestData) {
     sheet.appendRow(row);
     
     return { success: true, data: entry, timestamp: getISTDateTime() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * UPDATE AND DELETE OPERATIONS
+ */
+function handleUpdateTrade(requestData) {
+  try {
+    const sheet = getCachedSheet(CONFIG.SHEETS.TRADES);
+    const trade = requestData.data || requestData;
+    const data = sheet.getDataRange().getValues();
+    
+    // Find the trade by ID
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == trade.id) {
+        // Update the row
+        const row = [
+          trade.id,
+          formatIndianDate(trade.tradeDate || data[i][1]),
+          trade.stockName || data[i][2],
+          trade.quantity || data[i][3],
+          trade.entryPrice || data[i][4],
+          trade.exitPrice || data[i][5],
+          trade.stopLoss || data[i][6],
+          trade.targetPrice || data[i][7],
+          trade.profitLoss || data[i][8],
+          trade.setupFollowed !== undefined ? (trade.setupFollowed ? 'Yes' : 'No') : data[i][9],
+          trade.strategy || data[i][10],
+          trade.emotion || data[i][11],
+          trade.tradeNotes || data[i][12],
+          trade.psychologyReflections || data[i][13],
+          trade.screenshotUrl || data[i][14],
+          data[i][15] // Keep original created date
+        ];
+        
+        sheet.getRange(i + 1, 1, 1, TRADES_HEADERS.length).setValues([row]);
+        return { success: true, data: trade, timestamp: getISTDateTime() };
+      }
+    }
+    
+    return { success: false, error: 'Trade not found' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+function handleDeleteTrade(requestData) {
+  try {
+    const sheet = getCachedSheet(CONFIG.SHEETS.TRADES);
+    const { id } = requestData.data || requestData;
+    const data = sheet.getDataRange().getValues();
+    
+    // Find and delete the trade by ID
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == id) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'Trade deleted successfully' };
+      }
+    }
+    
+    return { success: false, error: 'Trade not found' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+function handleUpdateStrategy(requestData) {
+  try {
+    const sheet = getCachedSheet(CONFIG.SHEETS.STRATEGIES);
+    const strategy = requestData.data || requestData;
+    const data = sheet.getDataRange().getValues();
+    
+    // Find the strategy by ID
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == strategy.id) {
+        const row = [
+          strategy.id,
+          strategy.name || data[i][1],
+          strategy.description || data[i][2],
+          strategy.screenshotUrl || data[i][3],
+          strategy.tags || data[i][4],
+          strategy.status || data[i][5],
+          data[i][6] // Keep original created date
+        ];
+        
+        sheet.getRange(i + 1, 1, 1, STRATEGIES_HEADERS.length).setValues([row]);
+        return { success: true, data: strategy, timestamp: getISTDateTime() };
+      }
+    }
+    
+    return { success: false, error: 'Strategy not found' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+function handleDeleteStrategy(requestData) {
+  try {
+    const sheet = getCachedSheet(CONFIG.SHEETS.STRATEGIES);
+    const { id } = requestData.data || requestData;
+    const data = sheet.getDataRange().getValues();
+    
+    // Find and delete the strategy by ID
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == id) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'Strategy deleted successfully' };
+      }
+    }
+    
+    return { success: false, error: 'Strategy not found' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+function handleUpdatePsychologyEntry(requestData) {
+  try {
+    const sheet = getCachedSheet(CONFIG.SHEETS.PSYCHOLOGY);
+    const entry = requestData.data || requestData;
+    const data = sheet.getDataRange().getValues();
+    
+    // Find the entry by ID
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == entry.id) {
+        const row = [
+          entry.id,
+          entry.month !== undefined ? entry.month : data[i][1],
+          entry.year !== undefined ? entry.year : data[i][2],
+          entry.monthlyPnL !== undefined ? entry.monthlyPnL : data[i][3],
+          entry.bestTradeId !== undefined ? entry.bestTradeId : data[i][4],
+          entry.worstTradeId !== undefined ? entry.worstTradeId : data[i][5],
+          entry.mentalReflections !== undefined ? entry.mentalReflections : data[i][6],
+          entry.improvementAreas !== undefined ? entry.improvementAreas : data[i][7],
+          data[i][8] // Keep original created date
+        ];
+        
+        sheet.getRange(i + 1, 1, 1, PSYCHOLOGY_HEADERS.length).setValues([row]);
+        return { success: true, data: entry, timestamp: getISTDateTime() };
+      }
+    }
+    
+    return { success: false, error: 'Psychology entry not found' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+function handleDeletePsychologyEntry(requestData) {
+  try {
+    const sheet = getCachedSheet(CONFIG.SHEETS.PSYCHOLOGY);
+    const { id } = requestData.data || requestData;
+    const data = sheet.getDataRange().getValues();
+    
+    // Find and delete the entry by ID
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] == id) {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'Psychology entry deleted successfully' };
+      }
+    }
+    
+    return { success: false, error: 'Psychology entry not found' };
   } catch (error) {
     return { success: false, error: error.message };
   }
