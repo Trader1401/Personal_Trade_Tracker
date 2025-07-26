@@ -152,14 +152,19 @@ export default function Analytics() {
                 type="date"
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="w-36"
+                placeholder="Start Date"
+                className="w-36 text-gray-900 dark:text-gray-100 cursor-pointer"
+                max={new Date().toISOString().split('T')[0]}
               />
               <span className="text-gray-500">to</span>
               <Input
-                type="date"
+                type="date" 
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="w-36"
+                placeholder="End Date"
+                className="w-36 text-gray-900 dark:text-gray-100 cursor-pointer"
+                min={customStartDate}
+                max={new Date().toISOString().split('T')[0]}
               />
             </div>
           )}

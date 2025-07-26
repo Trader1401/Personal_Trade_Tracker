@@ -329,12 +329,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Psychology entries endpoints
+  app.get("/api/psychology-entries", async (req, res) => {
+    try {
+      const entries = await storage.getPsychologyEntries();
+      res.json({ data: entries });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch psychology entries" });
+    }
+  });
+
   app.get("/api/psychology", async (req, res) => {
     try {
       const entries = await storage.getPsychologyEntries();
       res.json(entries);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch psychology entries" });
+    }
+  });
+
+  app.post("/api/psychology-entries", async (req, res) => {
+    try {
+      const entryData = insertPsychologyEntrySchema.parse(req.body);
+      const entry = await storage.createPsychologyEntry(entryData);
+      res.status(201).json({ data: entry });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid psychology entry data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create psychology entry" });
+      }
     }
   });
 

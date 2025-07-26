@@ -29,8 +29,8 @@ export interface ConnectionTestResponse {
 
 export class GoogleSheetsClient {
   private scriptUrl: string | null = null;
-  private retryAttempts = 1; // Single attempt for fastest response
-  private retryDelay = 250; // Ultra-fast 250ms delay
+  private retryAttempts = 0; // No retries for ultra-fast response
+  private retryDelay = 100; // Ultra-fast 100ms delay
 
   constructor(scriptUrl?: string) {
     this.scriptUrl = scriptUrl || null;
@@ -188,7 +188,7 @@ export class GoogleSheetsClient {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // Ultra-fast 8 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Ultra-fast 5 second timeout
 
     try {
       const response = await fetch(this.scriptUrl, {
