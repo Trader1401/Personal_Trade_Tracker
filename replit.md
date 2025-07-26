@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Replit Agent to Replit Migration & Netlify Static Deployment Fix (2025-07-26) - COMPLETED ✅
+- ✅ Successfully migrated from Replit Agent to standard Replit environment
+- ✅ Fixed critical Netlify deployment 404 errors by implementing environment-based API routing
+- ✅ Modified frontend to work in both development (backend proxy) and production (direct Google Apps Script calls)
+- ✅ Updated Google Sheets integration to automatically detect environment and route accordingly
+- ✅ Fixed test connection functionality for static deployments
+- ✅ Created proper static build process with _redirects file for SPA routing
+- ✅ All API endpoints now work correctly in both local development and production deployment
+
 ### Migration to Replit Environment (2025-01-26) - COMPLETED ✅
 ### Production Optimization & Complete Integration (2025-01-26) - COMPLETED ✅
 - ✅ Successfully migrated from Replit Agent to standard Replit environment

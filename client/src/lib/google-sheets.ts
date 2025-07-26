@@ -11,28 +11,57 @@ export class GoogleSheetsAPI {
 
   private async makeRequest(action: string, data?: any) {
     try {
-      // Route through backend to avoid CORS issues
-      const response = await fetch("/api/google-sheets", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action,
-          data,
-        }),
-      });
+      // In production (static build), make direct calls to Google Apps Script
+      // In development, route through backend to avoid CORS issues
+      const isProduction = import.meta.env.PROD;
+      
+      if (isProduction) {
+        // Direct call to Google Apps Script
+        const response = await fetch(this.scriptUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action,
+            data: data || {},
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        return result.data || result;
+      } else {
+        // Development mode - route through backend
+        const response = await fetch("/api/google-sheets", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action,
+            data,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        return result.data || result;
       }
-
-      const result = await response.json();
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      return result.data || result;
     } catch (error) {
       console.error("Google Sheets API error:", error);
       throw error;

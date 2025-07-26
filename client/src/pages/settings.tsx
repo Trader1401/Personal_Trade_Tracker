@@ -65,17 +65,28 @@ export default function Settings() {
     setTestResult("");
 
     try {
-      // First save the settings, then test through backend to avoid CORS
-      await saveSettings(formData);
+      // First save the settings
+      saveSettings(formData);
       
-      const response = await fetch("/api/test-google-connection", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const isProduction = import.meta.env.PROD;
+      
+      if (isProduction) {
+        // In production, make direct call to Google Apps Script
+        const response = await fetch(formData.googleScriptUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "test",
+            data: {}
+          }),
+        });
 
-      if (response.ok) {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const result = await response.json();
         if (result.success) {
           setConnectionStatus("success");
@@ -88,7 +99,29 @@ export default function Settings() {
           throw new Error(result.error || "Connection test failed");
         }
       } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // In development, route through backend to avoid CORS
+        const response = await fetch("/api/test-google-connection", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setConnectionStatus("success");
+            setTestResult("Connection successful! Google Sheets integration is working.");
+            toast({
+              title: "Success",
+              description: "Connection to Google Sheets successful!",
+            });
+          } else {
+            throw new Error(result.error || "Connection test failed");
+          }
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
       }
     } catch (error) {
       setConnectionStatus("error");
