@@ -59,8 +59,8 @@ export class GoogleSheetsStorage implements IStorage {
     this.currentPsychologyId = 1;
     this.settingsPath = path.join(process.cwd(), 'data', 'settings.json');
 
-    // Only load demo data in development
-    if (process.env.NODE_ENV === 'development') {
+    // Only load demo data in development, NOT in production
+    if (process.env.NODE_ENV === 'development' && !process.env.DISABLE_DEMO_DATA) {
       this.initializeDemoData();
     }
     this.loadSettings();
