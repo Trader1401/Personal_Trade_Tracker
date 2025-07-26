@@ -11,33 +11,55 @@ export class GoogleSheetsAPI {
 
   private async makeRequest(action: string, data?: any) {
     try {
-      // In production (static build), make direct calls to Google Apps Script
+      // In production (static build), use JSONP to avoid CORS issues
       // In development, route through backend to avoid CORS issues
       const isProduction = import.meta.env.PROD;
       
       if (isProduction) {
-        // Direct call to Google Apps Script
-        const response = await fetch(this.scriptUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        // Use JSONP for production to avoid CORS issues
+        return new Promise((resolve, reject) => {
+          const callbackName = `jsonp_callback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Create callback function
+          (window as any)[callbackName] = (result: any) => {
+            delete (window as any)[callbackName];
+            document.body.removeChild(script);
+            
+            if (result.error) {
+              reject(new Error(result.error));
+            } else {
+              resolve(result.data || result);
+            }
+          };
+          
+          // Create script element for JSONP
+          const script = document.createElement('script');
+          const params = new URLSearchParams({
             action,
-            data: data || {},
-          }),
+            data: JSON.stringify(data || {}),
+            callback: callbackName
+          });
+          
+          script.src = `${this.scriptUrl}?${params.toString()}`;
+          script.onerror = () => {
+            delete (window as any)[callbackName];
+            document.body.removeChild(script);
+            reject(new Error('JSONP request failed'));
+          };
+          
+          document.body.appendChild(script);
+          
+          // Timeout after 30 seconds
+          setTimeout(() => {
+            if ((window as any)[callbackName]) {
+              delete (window as any)[callbackName];
+              if (document.body.contains(script)) {
+                document.body.removeChild(script);
+              }
+              reject(new Error('Request timeout'));
+            }
+          }, 30000);
         });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        return result.data || result;
       } else {
         // Development mode - route through backend
         const response = await fetch("/api/google-sheets", {

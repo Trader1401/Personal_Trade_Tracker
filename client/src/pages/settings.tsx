@@ -71,24 +71,47 @@ export default function Settings() {
       const isProduction = import.meta.env.PROD;
       
       if (isProduction) {
-        // In production, make direct call to Google Apps Script
-        const response = await fetch(formData.googleScriptUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        // In production, use JSONP to avoid CORS issues
+        const result = await new Promise((resolve, reject) => {
+          const callbackName = `jsonp_callback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Create callback function
+          (window as any)[callbackName] = (result: any) => {
+            delete (window as any)[callbackName];
+            document.body.removeChild(script);
+            resolve(result);
+          };
+          
+          // Create script element for JSONP
+          const script = document.createElement('script');
+          const params = new URLSearchParams({
             action: "test",
-            data: {}
-          }),
+            data: JSON.stringify({}),
+            callback: callbackName
+          });
+          
+          script.src = `${formData.googleScriptUrl}?${params.toString()}`;
+          script.onerror = () => {
+            delete (window as any)[callbackName];
+            document.body.removeChild(script);
+            reject(new Error('JSONP request failed'));
+          };
+          
+          document.body.appendChild(script);
+          
+          // Timeout after 15 seconds
+          setTimeout(() => {
+            if ((window as any)[callbackName]) {
+              delete (window as any)[callbackName];
+              if (document.body.contains(script)) {
+                document.body.removeChild(script);
+              }
+              reject(new Error('Request timeout'));
+            }
+          }, 15000);
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        if (result.success) {
+        if ((result as any).success) {
           setConnectionStatus("success");
           setTestResult("Connection successful! Google Sheets integration is working.");
           toast({
@@ -96,7 +119,7 @@ export default function Settings() {
             description: "Connection to Google Sheets successful!",
           });
         } else {
-          throw new Error(result.error || "Connection test failed");
+          throw new Error((result as any).error || "Connection test failed");
         }
       } else {
         // In development, route through backend to avoid CORS
