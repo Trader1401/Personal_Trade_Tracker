@@ -2,7 +2,7 @@
 
 [build]
   # Command to build the application
-  command = "npm run build"
+  command = "./build.sh"
   
   # Directory containing the built files
   publish = "dist/public"
