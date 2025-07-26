@@ -31,6 +31,10 @@ Preferred communication style: Simple, everyday language.
 - ✅ PRODUCTION READY: Test data disabled in production, clean deployment
 - ✅ VERIFIED DATA FLOW: UI to Google Sheets working for all data types with accurate calculations
 
+### URGENT DEPLOYMENT REQUIRED - Google Apps Script Updates ⚠️
+
+**USER MUST REDEPLOY GOOGLE APPS SCRIPT FOR FIXES TO TAKE EFFECT**
+
 ### Current Status - COMPREHENSIVE FIXES COMPLETED ✅
 - **Google Sheets Integration**: FIXED - Headers now match UI exactly (Trade Date, Stock Name, P&L, Stop Loss, Exit Price, Psychology Notes, Screenshot Link)
 - **Field Mapping**: FIXED - All UI fields map correctly to backend (stockName, SL, trade notes, psychology reflections)
