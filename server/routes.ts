@@ -48,8 +48,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result = { data: await storage.getTrades() };
           break;
         case 'addTrade':
-          // Add trade locally and sync to Google Sheets
-          const trade = await storage.createTrade(data);
+          // Validate and calculate P&L before storing
+          const validatedTrade = insertTradeSchema.parse(data);
+          
+          // Calculate P&L if exit price is provided
+          if (validatedTrade.exitPrice) {
+            const entryPrice = parseFloat(validatedTrade.entryPrice);
+            const exitPrice = parseFloat(validatedTrade.exitPrice);
+            const quantity = validatedTrade.quantity;
+            const calculatedPnL = (exitPrice - entryPrice) * quantity;
+            validatedTrade.profitLoss = calculatedPnL.toString();
+          }
+          
+          const trade = await storage.createTrade(validatedTrade);
           try {
             await googleSheetsClient.syncData({ trades: [trade] });
           } catch (syncError) {

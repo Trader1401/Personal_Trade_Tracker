@@ -9,10 +9,10 @@ import { AppProvider } from "@/contexts/app-context";
 import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
 import Dashboard from "@/pages/dashboard";
-import TradeLog from "@/pages/trade-log";
+import TradeLogEnhanced from "@/pages/trade-log-enhanced";
 import Analytics from "@/pages/analytics";
 import Strategies from "@/pages/strategies";
-import Psychology from "@/pages/psychology";
+import PsychologyEnhanced from "@/pages/psychology-enhanced";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
@@ -21,10 +21,10 @@ function Router() {
     <AnimatePresence mode="wait">
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/trades" component={TradeLog} />
+        <Route path="/trades" component={TradeLogEnhanced} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/strategies" component={Strategies} />
-        <Route path="/psychology" component={Psychology} />
+        <Route path="/psychology" component={PsychologyEnhanced} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

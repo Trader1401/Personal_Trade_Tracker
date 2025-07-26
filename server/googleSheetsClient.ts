@@ -68,7 +68,7 @@ export class GoogleSheetsClient {
   }
 
   /**
-   * Sync data to Google Sheets with retry logic
+   * Sync data to Google Sheets with proper field mapping and P&L calculations
    */
   async syncData(data: {
     trades?: any[];
@@ -85,9 +85,37 @@ export class GoogleSheetsClient {
     }
 
     try {
+      // Transform and validate data before syncing
+      const transformedData: any = {};
+      
+      if (data.trades && data.trades.length > 0) {
+        transformedData.trades = data.trades.map(trade => ({
+          ...trade,
+          // Ensure P&L is calculated correctly
+          profitLoss: trade.exitPrice && trade.entryPrice ? 
+            ((parseFloat(trade.exitPrice) - parseFloat(trade.entryPrice)) * trade.quantity).toString() :
+            trade.profitLoss || '0',
+          // Ensure all required fields are present
+          stockName: trade.stockName || '',
+          whichSetup: trade.whichSetup || null,
+          emotion: trade.emotion || null,
+          notes: trade.notes || null,
+          psychologyReflections: trade.psychologyReflections || null,
+          screenshotLink: trade.screenshotLink || null,
+        }));
+      }
+      
+      if (data.strategies) {
+        transformedData.strategies = data.strategies;
+      }
+      
+      if (data.psychologyEntries) {
+        transformedData.psychologyEntries = data.psychologyEntries;
+      }
+
       const response = await this.makeRequestWithRetry({
         action: 'sync',
-        ...data
+        ...transformedData
       });
 
       return response;
