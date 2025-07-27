@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Search, Filter, Calendar, Download } from "lucide-react";
+import { Plus, Search, Filter, Calendar, Download, Edit, Trash2, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,8 +38,11 @@ type TradeForm = z.infer<typeof tradeSchema>;
 
 export default function TradeLog() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const { trades, addTrade, isAdding, isLoading } = useTrades();
+  const { trades, addTrade, updateTrade, deleteTrade, isAdding, isLoading, isUpdating, isDeleting } = useTrades();
   const { strategies } = useStrategies();
 
   const form = useForm<TradeForm>({
@@ -66,7 +69,7 @@ export default function TradeLog() {
       ? calculatePnL(data.entryPrice, data.exitPrice, data.quantity)
       : 0;
 
-    addTrade({
+    const tradeData = {
       tradeDate: data.tradeDate,
       stockName: data.stockName.toUpperCase(),
       quantity: data.quantity,
@@ -83,8 +86,16 @@ export default function TradeLog() {
       screenshotLink: data.screenshotLink || null,
     });
 
+    if (selectedTrade) {
+      updateTrade({ id: selectedTrade.id, ...tradeData });
+      setIsEditDialogOpen(false);
+    } else {
+      addTrade(tradeData);
+      setIsAddDialogOpen(false);
+    }
+    
     form.reset();
-    setIsAddDialogOpen(false);
+    setSelectedTrade(null);
   };
 
   const filteredTrades = trades.filter(trade =>
@@ -400,6 +411,7 @@ export default function TradeLog() {
                     <TableHead>%</TableHead>
                     <TableHead>Strategy</TableHead>
                     <TableHead>Emotion</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -437,6 +449,58 @@ export default function TradeLog() {
                             <Badge variant="secondary">{trade.emotion}</Badge>
                           ) : "-"}
                         </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedTrade(trade);
+                                setIsDetailDialogOpen(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedTrade(trade);
+                                form.reset({
+                                  tradeDate: trade.tradeDate,
+                                  stockName: trade.stockName,
+                                  quantity: trade.quantity,
+                                  entryPrice: parseFloat(trade.entryPrice?.toString() || "0"),
+                                  exitPrice: trade.exitPrice ? parseFloat(trade.exitPrice.toString()) : 0,
+                                  stopLoss: trade.stopLoss ? parseFloat(trade.stopLoss.toString()) : 0,
+                                  targetPrice: trade.targetPrice ? parseFloat(trade.targetPrice.toString()) : 0,
+                                  setupFollowed: trade.setupFollowed || false,
+                                  whichSetup: trade.whichSetup || "",
+                                  emotion: trade.emotion || "",
+                                  notes: trade.notes || "",
+                                  psychologyReflections: trade.psychologyReflections || "",
+                                  screenshotLink: trade.screenshotLink || "",
+                                });
+                                setIsEditDialogOpen(true);
+                              }}
+                              disabled={isUpdating}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this trade?')) {
+                                  deleteTrade(trade.id);
+                                }
+                              }}
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -446,6 +510,99 @@ export default function TradeLog() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Trade Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Trade</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Same form fields as add dialog */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="tradeDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Trade Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="stockName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stock Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. RELIANCE, TCS" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating ? "Updating..." : "Update Trade"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Trade Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Trade Details</DialogTitle>
+          </DialogHeader>
+          {selectedTrade && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Date</label>
+                  <p>{new Date(selectedTrade.tradeDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Stock</label>
+                  <p className="font-semibold">{selectedTrade.stockName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Quantity</label>
+                  <p>{selectedTrade.quantity}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Entry Price</label>
+                  <p>₹{parseFloat(selectedTrade.entryPrice?.toString() || "0").toFixed(2)}</p>
+                </div>
+              </div>
+              {selectedTrade.notes && (
+                <div>
+                  <label className="text-sm font-medium">Notes</label>
+                  <p className="text-sm text-gray-600">{selectedTrade.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

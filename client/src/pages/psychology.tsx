@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Calendar, TrendingUp, TrendingDown, Brain, Book } from "lucide-react";
+import { Plus, Calendar, TrendingUp, TrendingDown, Brain, Book, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +32,11 @@ type PsychologyEntryForm = z.infer<typeof psychologyEntrySchema>;
 
 export default function Psychology() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [psychologyEntries, setPsychologyEntries] = useState<any[]>([]);
   const { trades } = useTrades();
   const { settings } = useAppContext();
   const { toast } = useToast();
