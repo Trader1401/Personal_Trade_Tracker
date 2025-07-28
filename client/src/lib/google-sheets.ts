@@ -92,56 +92,70 @@ export class GoogleSheetsAPI {
 
   // Trades
   async getTrades(): Promise<Trade[]> {
-    return this.makeRequest("getTrades");
+    const result = await this.makeRequest("getTrades");
+    // Ensure proper data structure for frontend
+    return result.data || result;
   }
 
   async addTrade(trade: Omit<Trade, "id" | "createdAt">): Promise<Trade> {
-    return this.makeRequest("addTrade", trade);
+    const result = await this.makeRequest("addTrade", trade);
+    return result.data || result;
   }
 
   async updateTrade(id: number, trade: Partial<Trade>): Promise<Trade> {
-    return this.makeRequest("updateTrade", { id, ...trade });
+    const result = await this.makeRequest("updateTrade", { id, ...trade });
+    return result.data || result;
   }
 
   async deleteTrade(id: number): Promise<void> {
-    return this.makeRequest("deleteTrade", { id });
+    const result = await this.makeRequest("deleteTrade", { id });
+    return result.data || result;
   }
 
   async getTradesByDate(date: string): Promise<Trade[]> {
-    return this.makeRequest("getTradesByDate", { date });
+    const result = await this.makeRequest("getTradesByDate", { date });
+    return result.data || result;
   }
 
   // Strategies
   async getStrategies(): Promise<Strategy[]> {
-    return this.makeRequest("getStrategies");
+    const result = await this.makeRequest("getStrategies");
+    return result.data || result;
   }
 
   async addStrategy(strategy: Omit<Strategy, "id" | "createdAt">): Promise<Strategy> {
-    return this.makeRequest("addStrategy", strategy);
+    const result = await this.makeRequest("addStrategy", strategy);
+    return result.data || result;
   }
 
   async updateStrategy(id: number, strategy: Partial<Strategy>): Promise<Strategy> {
-    return this.makeRequest("updateStrategy", { id, ...strategy });
+    const result = await this.makeRequest("updateStrategy", { id, ...strategy });
+    return result.data || result;
   }
 
   async deleteStrategy(id: number): Promise<void> {
-    return this.makeRequest("deleteStrategy", { id });
+    const result = await this.makeRequest("deleteStrategy", { id });
+    return result.data || result;
   }
 
   // Psychology Entries
   async getPsychologyEntries(): Promise<PsychologyEntry[]> {
-    return this.makeRequest("getPsychologyEntries");
+    const result = await this.makeRequest("getPsychologyEntries");
+    return result.data || result;
   }
 
   async addPsychologyEntry(entry: Omit<PsychologyEntry, "id" | "createdAt">): Promise<PsychologyEntry> {
-    return this.makeRequest("addPsychologyEntry", entry);
+    const result = await this.makeRequest("addPsychologyEntry", entry);
+    return result.data || result;
   }
 
   async updatePsychologyEntry(id: number, entry: Partial<PsychologyEntry>): Promise<PsychologyEntry> {
-    return this.makeRequest("updatePsychologyEntry", { id, ...entry });
+    const result = await this.makeRequest("updatePsychologyEntry", { id, ...entry });
+    return result.data || result;
   }
 
   async deletePsychologyEntry(id: number): Promise<void> {
-    return this.makeRequest("deletePsychologyEntry", { id });
+    const result = await this.makeRequest("deletePsychologyEntry", { id });
+    return result.data || result;
   }
 }

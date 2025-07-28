@@ -248,7 +248,7 @@ function handleGetTrades() {
     
     const trades = data.slice(1).map(row => ({
       id: row[0] || Date.now() + Math.random(),
-      tradeDate: formatIndianDate(row[1]),
+      tradeDate: row[1] ? new Date(row[1]).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       stockName: row[2] || '',
       quantity: parseInt(row[3]) || 0,
       entryPrice: row[4] || '0',
@@ -257,9 +257,9 @@ function handleGetTrades() {
       targetPrice: row[7] || '',
       profitLoss: row[8] || '0',
       setupFollowed: row[9] === 'Yes' || row[9] === true,
-      strategy: row[10] || '',
+      whichSetup: row[10] || null,
       emotion: row[11] || '',
-      tradeNotes: row[12] || '',
+      notes: row[12] || null,
       psychologyReflections: row[13] || '',
       screenshotUrl: row[14] || '',
       createdAt: row[15] || getISTDateTime()
@@ -285,7 +285,7 @@ function handleGetStrategies() {
       name: row[1] || '',
       description: row[2] || '',
       screenshotUrl: row[3] || '',
-      tags: row[4] || '',
+      tags: row[4] ? row[4].split(',').map(tag => tag.trim()) : null,
       status: row[5] || 'active',
       createdAt: row[6] || getISTDateTime()
     }));
@@ -307,11 +307,11 @@ function handleGetPsychologyEntries() {
     
     const entries = data.slice(1).map(row => ({
       id: row[0] || Date.now() + Math.random(),
-      month: parseInt(row[1]) || new Date().getMonth() + 1,
+      month: row[1] || '',
       year: parseInt(row[2]) || new Date().getFullYear(),
       monthlyPnL: row[3] || '0',
-      bestTradeId: row[4] || '',
-      worstTradeId: row[5] || '',
+      bestTradeId: row[4] ? parseInt(row[4]) : null,
+      worstTradeId: row[5] ? parseInt(row[5]) : null,
       mentalReflections: row[6] || '',
       improvementAreas: row[7] || '',
       createdAt: row[8] || getISTDateTime()
@@ -340,7 +340,7 @@ function handleAddTrade(requestData) {
     for (let i = 1; i < existingData.length; i++) {
       const row = existingData[i];
       if (row[2] === trade.stockName && 
-          row[1] && formatIndianDate(row[1]) === formatIndianDate(trade.tradeDate) &&
+          row[1] && new Date(row[1]).toISOString().split('T')[0] === trade.tradeDate &&
           row[4] === trade.entryPrice) {
         return { success: true, message: 'Duplicate prevented', data: trade };
       }
@@ -349,7 +349,7 @@ function handleAddTrade(requestData) {
     // Create row
     const row = [
       trade.id || Date.now(),
-      formatIndianDate(trade.tradeDate),
+      trade.tradeDate || new Date().toISOString().split('T')[0],
       trade.stockName || '',
       trade.quantity || 0,
       trade.entryPrice || '0',
@@ -358,9 +358,9 @@ function handleAddTrade(requestData) {
       trade.targetPrice || '',
       trade.profitLoss || '0',
       trade.setupFollowed ? 'Yes' : 'No',
-      trade.strategy || '',
+      trade.whichSetup || '',
       trade.emotion || '',
-      trade.tradeNotes || '',
+      trade.notes || '',
       trade.psychologyReflections || '',
       trade.screenshotUrl || '',
       getISTDateTime()
@@ -400,7 +400,7 @@ function handleAddStrategy(requestData) {
       strategy.name || '',
       strategy.description || '',
       strategy.screenshotUrl || '',
-      strategy.tags || '',
+      Array.isArray(strategy.tags) ? strategy.tags.join(',') : (strategy.tags || ''),
       strategy.status || 'active',
       getISTDateTime()
     ];
@@ -436,7 +436,7 @@ function handleAddPsychologyEntry(requestData) {
     
     const row = [
       entry.id || Date.now(),
-      entry.month || new Date().getMonth() + 1,
+      entry.month || '',
       entry.year || new Date().getFullYear(),
       entry.monthlyPnL || '0',
       entry.bestTradeId || '',
