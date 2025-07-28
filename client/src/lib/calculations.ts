@@ -150,3 +150,63 @@ export function groupTradesByStrategy(trades: Trade[]): Record<string, Trade[]> 
     return groups;
   }, {} as Record<string, Trade[]>);
 }
+
+export function calculateProfitFactor(trades: Trade[]): number {
+  const winningTrades = trades.filter(trade => {
+    let pnl = 0;
+    if (trade.profitLoss) {
+      pnl = typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : trade.profitLoss;
+    } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+      pnl = calculatePnL(
+        parseFloat(trade.entryPrice.toString()),
+        parseFloat(trade.exitPrice.toString()),
+        parseFloat(trade.quantity.toString())
+      );
+    }
+    return pnl > 0;
+  });
+  
+  const losingTrades = trades.filter(trade => {
+    let pnl = 0;
+    if (trade.profitLoss) {
+      pnl = typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : trade.profitLoss;
+    } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+      pnl = calculatePnL(
+        parseFloat(trade.entryPrice.toString()),
+        parseFloat(trade.exitPrice.toString()),
+        parseFloat(trade.quantity.toString())
+      );
+    }
+    return pnl < 0;
+  });
+  
+  const totalProfits = winningTrades.reduce((total, trade) => {
+    let pnl = 0;
+    if (trade.profitLoss) {
+      pnl = typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : trade.profitLoss;
+    } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+      pnl = calculatePnL(
+        parseFloat(trade.entryPrice.toString()),
+        parseFloat(trade.exitPrice.toString()),
+        parseFloat(trade.quantity.toString())
+      );
+    }
+    return total + Math.abs(pnl);
+  }, 0);
+  
+  const totalLosses = losingTrades.reduce((total, trade) => {
+    let pnl = 0;
+    if (trade.profitLoss) {
+      pnl = typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : trade.profitLoss;
+    } else if (trade.entryPrice && trade.exitPrice && trade.quantity) {
+      pnl = calculatePnL(
+        parseFloat(trade.entryPrice.toString()),
+        parseFloat(trade.exitPrice.toString()),
+        parseFloat(trade.quantity.toString())
+      );
+    }
+    return total + Math.abs(pnl);
+  }, 0);
+  
+  return totalLosses === 0 ? (totalProfits > 0 ? totalProfits : 0) : totalProfits / totalLosses;
+}

@@ -22,7 +22,10 @@ export default function StatsCards() {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const todaysTrades = trades.filter(trade => trade.tradeDate === today);
+  const todaysTrades = trades.filter(trade => {
+    const tradeDate = new Date(trade.tradeDate).toISOString().split('T')[0];
+    return tradeDate === today;
+  });
   const todaysPnL = calculateTotalPnL(todaysTrades);
 
   const thisMonth = new Date();
@@ -44,8 +47,8 @@ export default function StatsCards() {
     },
     {
       title: "Total Trades",
-      value: monthlyTrades.length.toString(),
-      change: "This month",
+      value: trades.length.toString(),
+      change: `${monthlyTrades.length} this month`,
       icon: Target,
       iconBg: "bg-blue-100",
       iconColor: "text-primary",

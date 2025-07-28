@@ -103,6 +103,26 @@
   .dark .text-visible {
     color: var(--foreground) !important;
   }
+
+  /* Calendar icon visibility fix for dark mode */
+  .dark .lucide-calendar {
+    color: white !important;
+    stroke: white !important;
+  }
+
+  .light .lucide-calendar {
+    color: black !important;
+    stroke: black !important;
+  }
+
+  /* Ensure calendar icons are visible in both modes */
+  .calendar-icon {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+
+  .calendar-icon svg {
+    @apply stroke-current;
+  }
 }
 
 @layer components {

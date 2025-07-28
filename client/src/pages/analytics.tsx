@@ -13,6 +13,7 @@ import {
   calculateAverageWin,
   calculateAverageLoss,
   calculateMaxDrawdown,
+  calculateProfitFactor,
   formatCurrency,
   formatPercentage,
   groupTradesByStrategy,
@@ -84,7 +85,7 @@ export default function Analytics() {
   const avgWin = calculateAverageWin(filteredTrades);
   const avgLoss = calculateAverageLoss(filteredTrades);
   const maxDrawdown = calculateMaxDrawdown(filteredTrades);
-  const profitFactor = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : 0;
+  const profitFactor = calculateProfitFactor(filteredTrades);
 
   const strategyGroups = groupTradesByStrategy(filteredTrades);
   const strategyPerformance = Object.entries(strategyGroups).map(([strategy, strategyTrades]) => ({

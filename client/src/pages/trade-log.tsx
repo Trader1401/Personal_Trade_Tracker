@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useTrades } from "@/hooks/use-trades";
 import { useStrategies } from "@/hooks/use-strategies";
 import { calculatePnL, formatCurrency, formatPercentage, calculatePercentage } from "@/lib/calculations";
+import { formatDateForDisplay, formatDateForInput, isValidDate } from "@/utils/date-utils";
 
 const tradeSchema = z.object({
   tradeDate: z.string().min(1, "Trade date is required"),
@@ -411,6 +412,7 @@ export default function TradeLog() {
                     <TableHead>%</TableHead>
                     <TableHead>Strategy</TableHead>
                     <TableHead>Emotion</TableHead>
+                    <TableHead>Notes</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -425,8 +427,15 @@ export default function TradeLog() {
                       : 0;
 
                     return (
-                      <TableRow key={trade.id}>
-                        <TableCell>{new Date(trade.tradeDate).toLocaleDateString()}</TableCell>
+                      <TableRow 
+                        key={trade.id}
+                        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                        onClick={() => {
+                          setSelectedTrade(trade);
+                          setIsDetailDialogOpen(true);
+                        }}
+                      >
+                        <TableCell>{isValidDate(trade.tradeDate) ? formatDateForDisplay(trade.tradeDate) : trade.tradeDate}</TableCell>
                         <TableCell className="font-medium text-visible">{trade.stockName}</TableCell>
                         <TableCell className="text-visible">{trade.quantity}</TableCell>
                         <TableCell className="text-visible">₹{parseFloat(trade.entryPrice?.toString() || "0").toFixed(2)}</TableCell>
@@ -449,8 +458,11 @@ export default function TradeLog() {
                             <Badge variant="secondary">{trade.emotion}</Badge>
                           ) : "-"}
                         </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {trade.notes || "-"}
+                        </TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
+                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -467,7 +479,7 @@ export default function TradeLog() {
                               onClick={() => {
                                 setSelectedTrade(trade);
                                 form.reset({
-                                  tradeDate: trade.tradeDate,
+                                  tradeDate: formatDateForInput(trade.tradeDate),
                                   stockName: trade.stockName,
                                   quantity: trade.quantity,
                                   entryPrice: parseFloat(trade.entryPrice?.toString() || "0"),
@@ -574,31 +586,98 @@ export default function TradeLog() {
             <DialogTitle>Trade Details</DialogTitle>
           </DialogHeader>
           {selectedTrade && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Date</label>
-                  <p>{new Date(selectedTrade.tradeDate).toLocaleDateString()}</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+                  <p className="text-gray-900 dark:text-gray-100">{isValidDate(selectedTrade.tradeDate) ? formatDateForDisplay(selectedTrade.tradeDate) : selectedTrade.tradeDate}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Stock</label>
-                  <p className="font-semibold">{selectedTrade.stockName}</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Stock</label>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedTrade.stockName}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Quantity</label>
-                  <p>{selectedTrade.quantity}</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Quantity</label>
+                  <p className="text-gray-900 dark:text-gray-100">{selectedTrade.quantity}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Entry Price</label>
-                  <p>₹{parseFloat(selectedTrade.entryPrice?.toString() || "0").toFixed(2)}</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Entry Price</label>
+                  <p className="text-gray-900 dark:text-gray-100">₹{parseFloat(selectedTrade.entryPrice?.toString() || "0").toFixed(2)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Exit Price</label>
+                  <p className="text-gray-900 dark:text-gray-100">{selectedTrade.exitPrice ? `₹${parseFloat(selectedTrade.exitPrice.toString()).toFixed(2)}` : "Not exited"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">P&L</label>
+                  <p className={`font-semibold ${parseFloat(selectedTrade.profitLoss?.toString() || "0") >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {formatCurrency(parseFloat(selectedTrade.profitLoss?.toString() || "0"))}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Strategy</label>
+                  <p className="text-gray-900 dark:text-gray-100">{selectedTrade.whichSetup || "Not specified"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Emotion</label>
+                  <p className="text-gray-900 dark:text-gray-100">{selectedTrade.emotion || "Not specified"}</p>
                 </div>
               </div>
+              
               {selectedTrade.notes && (
                 <div>
-                  <label className="text-sm font-medium">Notes</label>
-                  <p className="text-sm text-gray-600">{selectedTrade.notes}</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">{selectedTrade.notes}</p>
                 </div>
               )}
+              
+              {selectedTrade.psychologyReflections && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Psychology Reflections</label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">{selectedTrade.psychologyReflections}</p>
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSelectedTrade(selectedTrade);
+                    form.reset({
+                      tradeDate: formatDateForInput(selectedTrade.tradeDate),
+                      stockName: selectedTrade.stockName,
+                      quantity: selectedTrade.quantity,
+                      entryPrice: parseFloat(selectedTrade.entryPrice?.toString() || "0"),
+                      exitPrice: selectedTrade.exitPrice ? parseFloat(selectedTrade.exitPrice.toString()) : 0,
+                      stopLoss: selectedTrade.stopLoss ? parseFloat(selectedTrade.stopLoss.toString()) : 0,
+                      targetPrice: selectedTrade.targetPrice ? parseFloat(selectedTrade.targetPrice.toString()) : 0,
+                      setupFollowed: selectedTrade.setupFollowed || false,
+                      whichSetup: selectedTrade.whichSetup || "",
+                      emotion: selectedTrade.emotion || "",
+                      notes: selectedTrade.notes || "",
+                      psychologyReflections: selectedTrade.psychologyReflections || "",
+                      screenshotLink: selectedTrade.screenshotLink || "",
+                    });
+                    setIsDetailDialogOpen(false);
+                    setIsEditDialogOpen(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Trade
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this trade?')) {
+                      deleteTrade(selectedTrade.id);
+                      setIsDetailDialogOpen(false);
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Trade
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
