@@ -1,12 +1,26 @@
 import { Filter, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import TradeDetailModal from "@/components/trade/trade-detail-modal";
 import { useTrades } from "@/hooks/use-trades";
 import { formatCurrency, formatPercentage, calculatePercentage } from "@/lib/calculations";
 import { Link } from "wouter";
 
 export default function RecentTrades() {
   const { trades, isLoading } = useTrades();
+  const [selectedTrade, setSelectedTrade] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const handleTradeClick = (trade: any) => {
+    setSelectedTrade(trade);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedTrade(null);
+  };
 
   if (isLoading) {
     return (
@@ -42,7 +56,8 @@ export default function RecentTrades() {
     .slice(0, 5);
 
   return (
-    <Card>
+    <>
+      <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Recent Trades</CardTitle>
@@ -73,7 +88,8 @@ export default function RecentTrades() {
                 : 0;
               
               const stockSymbol = trade.stockName.length > 4 
-                ? trade.stockName.substring(0, 4) 
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => handleTradeClick(trade)}
                 : trade.stockName;
 
               return (
@@ -106,6 +122,14 @@ export default function RecentTrades() {
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+
+      {/* Trade Detail Modal */}
+      <TradeDetailModal
+        trade={selectedTrade}
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+      />
+    </>
   );
 }

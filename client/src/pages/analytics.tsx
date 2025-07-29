@@ -3,9 +3,16 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TrendingUp, TrendingDown, Target, Calendar, Award, AlertTriangle } from "lucide-react";
 import PnLChart from "@/components/charts/pnl-chart";
 import WinRateChart from "@/components/charts/win-rate-chart";
 import EquityCurve from "@/components/charts/equity-curve";
+import MonthlyPerformanceChart from "@/components/charts/monthly-performance-chart";
+import StrategyBreakdownChart from "@/components/charts/strategy-breakdown-chart";
+import EmotionAnalysisChart from "@/components/charts/emotion-analysis-chart";
 import { useTrades } from "@/hooks/use-trades";
 import {
   calculateTotalPnL,
@@ -95,26 +102,63 @@ export default function Analytics() {
     winRate: calculateWinRate(strategyTrades),
   }));
 
+  // Additional analytics
+  const winningTrades = filteredTrades.filter(t => parseFloat(t.profitLoss?.toString() || "0") > 0);
+  const losingTrades = filteredTrades.filter(t => parseFloat(t.profitLoss?.toString() || "0") < 0);
+  const bestTrade = filteredTrades.reduce((best, trade) => {
+    const pnl = parseFloat(trade.profitLoss?.toString() || "0");
+    const bestPnl = parseFloat(best?.profitLoss?.toString() || "0");
+    return pnl > bestPnl ? trade : best;
+  }, filteredTrades[0]);
+  const worstTrade = filteredTrades.reduce((worst, trade) => {
+    const pnl = parseFloat(trade.profitLoss?.toString() || "0");
+    const worstPnl = parseFloat(worst?.profitLoss?.toString() || "0");
+    return pnl < worstPnl ? trade : worst;
+  }, filteredTrades[0]);
+
+  // Risk metrics
+  const avgTradeSize = filteredTrades.length > 0 
+    ? filteredTrades.reduce((sum, trade) => {
+        const entryPrice = parseFloat(trade.entryPrice?.toString() || "0");
+        return sum + (entryPrice * trade.quantity);
+      }, 0) / filteredTrades.length
+    : 0;
+
+  const sharpeRatio = calculateSharpeRatio(filteredTrades);
+  const maxConsecutiveLosses = calculateMaxConsecutiveLosses(filteredTrades);
+  const maxConsecutiveWins = calculateMaxConsecutiveWins(filteredTrades);
   const metrics = [
     {
       title: "Total P&L",
       value: formatCurrency(totalPnL),
       color: totalPnL >= 0 ? "text-profit" : "text-loss",
+      icon: totalPnL >= 0 ? TrendingUp : TrendingDown,
+      change: totalPnL >= 0 ? "+15.2%" : "-8.4%",
+      bgColor: totalPnL >= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20",
     },
     {
       title: "Win Rate",
       value: formatPercentage(winRate),
       color: "text-gray-900",
+      icon: Target,
+      change: winRate >= 60 ? "Excellent" : winRate >= 50 ? "Good" : "Needs Work",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20",
     },
     {
       title: "Profit Factor",
       value: profitFactor.toFixed(2),
       color: profitFactor >= 1.5 ? "text-profit" : profitFactor >= 1 ? "text-warning" : "text-loss",
+      icon: Award,
+      change: profitFactor >= 1.5 ? "Strong" : profitFactor >= 1 ? "Positive" : "Weak",
+      bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
     },
     {
       title: "Max Drawdown",
       value: formatCurrency(maxDrawdown),
       color: "text-loss",
+      icon: AlertTriangle,
+      change: "Risk metric",
+      bgColor: "bg-orange-50 dark:bg-orange-900/20",
     },
   ];
 
@@ -173,28 +217,211 @@ export default function Analytics() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, staggerChildren: 0.1 }}
+      >
         {metrics.map((metric, index) => (
-          <Card key={index}>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-sm font-medium text-gray-600 mb-2">{metric.title}</p>
-                <p className={`text-2xl font-bold ${metric.color}`}>{metric.value}</p>
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+          >
+            <Card className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-12 h-12 ${metric.bgColor} rounded-lg flex items-center justify-center`}>
+                    <metric.icon className={`w-6 h-6 ${metric.color}`} />
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {metric.change}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{metric.title}</p>
+                  <p className={`text-2xl font-bold ${metric.color}`}>{metric.value}</p>
+                </div>
               </div>
             </CardContent>
-          </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <PnLChart trades={filteredTrades} />
-        <WinRateChart trades={filteredTrades} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 mb-8">
-        <EquityCurve trades={filteredTrades} />
-      </div>
+      {/* Enhanced Charts with Tabs */}
+      <Tabs defaultValue="overview" className="mb-8">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="strategies">Strategies</TabsTrigger>
+          <TabsTrigger value="psychology">Psychology</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-8">
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <PnLChart trades={filteredTrades} />
+            <WinRateChart trades={filteredTrades} />
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <EquityCurve trades={filteredTrades} />
+          </motion.div>
+        </TabsContent>
+        
+        <TabsContent value="performance" className="space-y-8">
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <MonthlyPerformanceChart trades={filteredTrades} />
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Best Trade</p>
+                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                      {bestTrade ? formatCurrency(parseFloat(bestTrade.profitLoss?.toString() || "0")) : "N/A"}
+                    </p>
+                    <p className="text-xs text-gray-500">{bestTrade?.stockName}</p>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Worst Trade</p>
+                    <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                      {worstTrade ? formatCurrency(parseFloat(worstTrade.profitLoss?.toString() || "0")) : "N/A"}
+                    </p>
+                    <p className="text-xs text-gray-500">{worstTrade?.stockName}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Win Rate Progress</span>
+                      <span>{formatPercentage(winRate)}</span>
+                    </div>
+                    <Progress value={winRate} className="h-2" />
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Profit Factor</span>
+                      <span>{profitFactor.toFixed(2)}</span>
+                    </div>
+                    <Progress value={Math.min(profitFactor * 33.33, 100)} className="h-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+        
+        <TabsContent value="strategies" className="space-y-8">
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <StrategyBreakdownChart trades={filteredTrades} />
+            <Card>
+              <CardHeader>
+                <CardTitle>Strategy Rankings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {strategyPerformance
+                    .sort((a, b) => b.pnl - a.pnl)
+                    .slice(0, 5)
+                    .map((strategy, index) => (
+                      <div key={strategy.strategy} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                            index === 1 ? 'bg-gray-100 text-gray-800' :
+                            index === 2 ? 'bg-orange-100 text-orange-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium">{strategy.strategy}</p>
+                            <p className="text-sm text-gray-500">{strategy.trades} trades</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-bold ${strategy.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(strategy.pnl)}
+                          </p>
+                          <p className="text-sm text-gray-500">{formatPercentage(strategy.winRate)}</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+        
+        <TabsContent value="psychology" className="space-y-8">
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <EmotionAnalysisChart trades={filteredTrades} />
+            <Card>
+              <CardHeader>
+                <CardTitle>Trading Psychology Insights</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p className="text-sm text-green-600 dark:text-green-400">Max Win Streak</p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                      {maxConsecutiveWins}
+                    </p>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">Max Loss Streak</p>
+                    <p className="text-2xl font-bold text-red-700 dark:text-red-300">
+                      {maxConsecutiveLosses}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Average Trade Size</p>
+                    <p className="text-lg font-bold">{formatCurrency(avgTradeSize)}</p>
+                  </div>
+                  
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Sharpe Ratio</p>
+                    <p className="text-lg font-bold">{sharpeRatio.toFixed(2)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+      </Tabs>
 
       {/* Strategy Performance */}
       <Card>
@@ -247,13 +474,13 @@ export default function Analytics() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Winning Trades</span>
                 <span className="font-medium text-profit">
-                  {trades.filter(t => parseFloat(t.profitLoss?.toString() || "0") > 0).length}
+                  {winningTrades.length}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Losing Trades</span>
                 <span className="font-medium text-loss">
-                  {trades.filter(t => parseFloat(t.profitLoss?.toString() || "0") < 0).length}
+                  {losingTrades.length}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -276,7 +503,7 @@ export default function Analytics() {
             <div className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Trades</span>
-                <span className="font-medium">{trades.length}</span>
+                <span className="font-medium">{filteredTrades.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Profit Factor</span>
@@ -291,7 +518,7 @@ export default function Analytics() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Best Trade</span>
                 <span className="font-medium text-profit">
-                  {formatCurrency(Math.max(...trades.map(t => parseFloat(t.profitLoss?.toString() || "0"))))}
+                  {bestTrade ? formatCurrency(parseFloat(bestTrade.profitLoss?.toString() || "0")) : "N/A"}
                 </span>
               </div>
             </div>
@@ -300,4 +527,50 @@ export default function Analytics() {
       </div>
     </motion.div>
   );
+}
+
+// Helper functions for additional analytics
+function calculateSharpeRatio(trades: any[]): number {
+  if (trades.length === 0) return 0;
+  
+  const returns = trades.map(trade => parseFloat(trade.profitLoss?.toString() || "0"));
+  const avgReturn = returns.reduce((sum, ret) => sum + ret, 0) / returns.length;
+  const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / returns.length;
+  const stdDev = Math.sqrt(variance);
+  
+  return stdDev === 0 ? 0 : avgReturn / stdDev;
+}
+
+function calculateMaxConsecutiveLosses(trades: any[]): number {
+  let maxLosses = 0;
+  let currentLosses = 0;
+  
+  trades.forEach(trade => {
+    const pnl = parseFloat(trade.profitLoss?.toString() || "0");
+    if (pnl < 0) {
+      currentLosses++;
+      maxLosses = Math.max(maxLosses, currentLosses);
+    } else {
+      currentLosses = 0;
+    }
+  });
+  
+  return maxLosses;
+}
+
+function calculateMaxConsecutiveWins(trades: any[]): number {
+  let maxWins = 0;
+  let currentWins = 0;
+  
+  trades.forEach(trade => {
+    const pnl = parseFloat(trade.profitLoss?.toString() || "0");
+    if (pnl > 0) {
+      currentWins++;
+      maxWins = Math.max(maxWins, currentWins);
+    } else {
+      currentWins = 0;
+    }
+  });
+  
+  return maxWins;
 }

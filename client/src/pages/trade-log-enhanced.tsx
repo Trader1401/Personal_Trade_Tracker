@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Search, Filter, Calendar, Download, FileDown, X } from "lucide-react";
+import { Plus, Search, Filter, Calendar, Download, FileDown, X, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import TradeDetailModal from "@/components/trade/trade-detail-modal";
 import { useTrades } from "@/hooks/use-trades";
 import { useStrategies } from "@/hooks/use-strategies";
 import { calculatePnL, formatCurrency, formatPercentage, calculatePercentage } from "@/lib/calculations";
+import { formatDateForDisplay, isValidDate } from "@/utils/date-utils";
 
 const tradeSchema = z.object({
   tradeDate: z.string().min(1, "Trade date is required"),
@@ -51,6 +53,8 @@ const emotions = ["Confident", "Neutral", "Anxious", "Excited", "Fearful", "Gree
 export default function TradeLogEnhanced() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<FilterForm>({
     profitLoss: "all"
@@ -83,6 +87,15 @@ export default function TradeLogEnhanced() {
     defaultValues: filters,
   });
 
+  const handleTradeClick = (trade: any) => {
+    setSelectedTrade(trade);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedTrade(null);
+  };
   const onSubmit = (data: TradeForm) => {
     const profitLoss = data.exitPrice 
       ? calculatePnL(data.entryPrice, data.exitPrice, data.quantity)
@@ -659,6 +672,7 @@ export default function TradeLogEnhanced() {
                     <TableHead>Strategy</TableHead>
                     <TableHead>Emotion</TableHead>
                     <TableHead>Notes</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -667,16 +681,14 @@ export default function TradeLogEnhanced() {
                     const exitPrice = parseFloat(trade.exitPrice || "0");
                     const pnl = parseFloat(trade.profitLoss || "0");
                     const pnlPercent = exitPrice > 0 ? calculatePercentage(entryPrice, exitPrice) : 0;
-                    const isProfitable = pnl >= 0;
+                        <TableCell className="font-medium">
+                          {isValidDate(trade.tradeDate) ? formatDateForDisplay(trade.tradeDate) : trade.tradeDate}
+                        </TableCell>
 
                     return (
                       <TableRow key={trade.id}>
                         <TableCell className="font-medium">{trade.tradeDate}</TableCell>
-                        <TableCell className="font-semibold">{trade.stockName}</TableCell>
-                        <TableCell>{trade.quantity}</TableCell>
-                        <TableCell>{formatCurrency(entryPrice)}</TableCell>
-                        <TableCell>{exitPrice > 0 ? formatCurrency(exitPrice) : "-"}</TableCell>
-                        <TableCell>
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800"
                           <span className={`font-semibold ${
                             isProfitable 
                               ? 'text-green-600 dark:text-green-400' 
@@ -713,6 +725,16 @@ export default function TradeLogEnhanced() {
                             </div>
                           ) : "-"}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleTradeClick(trade)}
+                            className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -723,5 +745,11 @@ export default function TradeLogEnhanced() {
         </CardContent>
       </Card>
     </motion.div>
+      {/* Trade Detail Modal */}
+      <TradeDetailModal
+        trade={selectedTrade}
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+      />
   );
 }
