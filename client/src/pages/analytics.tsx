@@ -244,8 +244,8 @@ export default function Analytics() {
                   <p className="text-sm font-medium text-gray-600 mb-1">{metric.title}</p>
                   <p className={`text-2xl font-bold ${metric.color}`}>{metric.value}</p>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
+            </Card>
           </motion.div>
         ))}
       </motion.div>
