@@ -681,14 +681,18 @@ export default function TradeLogEnhanced() {
                     const exitPrice = parseFloat(trade.exitPrice || "0");
                     const pnl = parseFloat(trade.profitLoss || "0");
                     const pnlPercent = exitPrice > 0 ? calculatePercentage(entryPrice, exitPrice) : 0;
+                    const isProfitable = pnl >= 0;
+
+                    return (
+                      <TableRow key={trade.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                         <TableCell className="font-medium">
                           {isValidDate(trade.tradeDate) ? formatDateForDisplay(trade.tradeDate) : trade.tradeDate}
                         </TableCell>
-
-                    return (
-                      <TableRow key={trade.id}>
-                        <TableCell className="font-medium">{trade.tradeDate}</TableCell>
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                        <TableCell className="font-medium">{trade.stockName}</TableCell>
+                        <TableCell>{trade.quantity}</TableCell>
+                        <TableCell>{formatCurrency(entryPrice)}</TableCell>
+                        <TableCell>{exitPrice > 0 ? formatCurrency(exitPrice) : "-"}</TableCell>
+                        <TableCell>
                           <span className={`font-semibold ${
                             isProfitable 
                               ? 'text-green-600 dark:text-green-400' 
