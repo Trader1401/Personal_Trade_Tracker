@@ -88,20 +88,20 @@ export default function RecentTrades() {
                 : 0;
               
               const stockSymbol = trade.stockName.length > 4 
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                    onClick={() => handleTradeClick(trade)}
+                ? trade.stockName.substring(0, 4)
                 : trade.stockName;
 
               return (
                 <div 
                   key={trade.id} 
                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  onClick={() => handleTradeClick(trade)}
                 >
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                       <span className="text-blue-600 font-bold text-sm">{stockSymbol}</span>
                     </div>
-                        onClick={() => onTradeClick?.(trade)}
+                    <div>
                       <p className="font-medium text-gray-900">{trade.stockName}</p>
                       <p className="text-sm text-gray-500">
                         {new Date(trade.tradeDate).toLocaleDateString()} • {trade.quantity} shares
