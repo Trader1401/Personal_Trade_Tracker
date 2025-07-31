@@ -39,8 +39,7 @@ export const strategySchema = insertStrategySchema.extend({
 
 // Psychology Entry Schema
 export const insertPsychologyEntrySchema = z.object({
-  month: z.string(),
-  year: z.number(),
+  entryDate: z.string(),
   monthlyPnL: z.string().nullable().optional(),
   bestTradeId: z.number().nullable().optional(),
   worstTradeId: z.number().nullable().optional(),

@@ -28,7 +28,7 @@ const STRATEGIES_HEADERS = [
 ];
 
 const PSYCHOLOGY_HEADERS = [
-  'ID', 'Month', 'Year', 'Monthly P&L', 'Best Trade ID', 'Worst Trade ID',
+  'ID', 'Entry Date', 'Daily P&L', 'Best Trade ID', 'Worst Trade ID',
   'Mental Reflections', 'Improvement Areas', 'Created At'
 ];
 
@@ -307,14 +307,13 @@ function handleGetPsychologyEntries() {
     
     const entries = data.slice(1).map(row => ({
       id: row[0] || Date.now() + Math.random(),
-      month: row[1] || '',
-      year: parseInt(row[2]) || new Date().getFullYear(),
-      monthlyPnL: row[3] || '0',
-      bestTradeId: row[4] ? parseInt(row[4]) : null,
-      worstTradeId: row[5] ? parseInt(row[5]) : null,
-      mentalReflections: row[6] || '',
-      improvementAreas: row[7] || '',
-      createdAt: row[8] || getISTDateTime()
+      entryDate: row[1] || '',
+      monthlyPnL: row[2] || '0',
+      bestTradeId: row[3] ? parseInt(row[3]) : null,
+      worstTradeId: row[4] ? parseInt(row[4]) : null,
+      mentalReflections: row[5] || '',
+      improvementAreas: row[6] || '',
+      createdAt: row[7] || getISTDateTime()
     }));
     
     return { success: true, data: entries };
@@ -429,15 +428,14 @@ function handleAddPsychologyEntry(requestData) {
     const existingData = sheet.getDataRange().getValues();
     for (let i = 1; i < existingData.length; i++) {
       const row = existingData[i];
-      if (row[1] === entry.month && row[2] === entry.year) {
+      if (row[1] === entry.entryDate) {
         return { success: true, message: 'Duplicate prevented', data: entry };
       }
     }
     
     const row = [
       entry.id || Date.now(),
-      entry.month || '',
-      entry.year || new Date().getFullYear(),
+      entry.entryDate || '',
       entry.monthlyPnL || '0',
       entry.bestTradeId || '',
       entry.worstTradeId || '',
@@ -578,14 +576,13 @@ function handleUpdatePsychologyEntry(requestData) {
       if (data[i][0] == entry.id) {
         const row = [
           entry.id,
-          entry.month !== undefined ? entry.month : data[i][1],
-          entry.year !== undefined ? entry.year : data[i][2],
-          entry.monthlyPnL !== undefined ? entry.monthlyPnL : data[i][3],
-          entry.bestTradeId !== undefined ? entry.bestTradeId : data[i][4],
-          entry.worstTradeId !== undefined ? entry.worstTradeId : data[i][5],
-          entry.mentalReflections !== undefined ? entry.mentalReflections : data[i][6],
-          entry.improvementAreas !== undefined ? entry.improvementAreas : data[i][7],
-          data[i][8] // Keep original created date
+          entry.entryDate !== undefined ? entry.entryDate : data[i][1],
+          entry.monthlyPnL !== undefined ? entry.monthlyPnL : data[i][2],
+          entry.bestTradeId !== undefined ? entry.bestTradeId : data[i][3],
+          entry.worstTradeId !== undefined ? entry.worstTradeId : data[i][4],
+          entry.mentalReflections !== undefined ? entry.mentalReflections : data[i][5],
+          entry.improvementAreas !== undefined ? entry.improvementAreas : data[i][6],
+          data[i][7] // Keep original created date
         ];
         
         sheet.getRange(i + 1, 1, 1, PSYCHOLOGY_HEADERS.length).setValues([row]);

@@ -19,8 +19,7 @@ import { useTrades } from "@/hooks/use-trades";
 import { calculateTotalPnL, formatCurrency } from "@/lib/calculations";
 
 const psychologySchema = z.object({
-  month: z.string().min(1, "Month is required"),
-  year: z.coerce.number().min(2020).max(2030),
+  entryDate: z.string().min(1, "Entry date is required"),
   monthlyPnL: z.coerce.number().optional(),
   bestTradeId: z.coerce.number().optional(),
   worstTradeId: z.coerce.number().optional(),
@@ -39,8 +38,7 @@ export default function PsychologyEnhanced() {
   const form = useForm<PsychologyForm>({
     resolver: zodResolver(psychologySchema),
     defaultValues: {
-      month: new Date().toLocaleString('default', { month: 'long' }),
-      year: new Date().getFullYear(),
+      entryDate: new Date().toISOString().split('T')[0],
       monthlyPnL: 0,
       bestTradeId: 0,
       worstTradeId: 0,
@@ -52,8 +50,7 @@ export default function PsychologyEnhanced() {
   const onSubmit = async (data: PsychologyForm) => {
     try {
       await addPsychologyEntry({
-        month: data.month,
-        year: data.year,
+        entryDate: data.entryDate,
         monthlyPnL: data.monthlyPnL?.toString(),
         bestTradeId: data.bestTradeId,
         worstTradeId: data.worstTradeId,
@@ -67,7 +64,7 @@ export default function PsychologyEnhanced() {
       // Show success message
       toast({
         title: "Psychology Entry Added!",
-        description: `${data.month} ${data.year} psychology entry saved successfully.`,
+        description: `Psychology entry for ${data.entryDate} saved successfully.`,
         variant: "default",
       });
     } catch (error) {
@@ -81,19 +78,12 @@ export default function PsychologyEnhanced() {
   };
 
   // Get current month's statistics
-  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
-  const currentYear = new Date().getFullYear();
-  const currentMonthTrades = trades.filter(trade => {
+  const today = new Date().toISOString().split('T')[0];
+  const todaysTrades = trades.filter(trade => {
     const tradeDate = new Date(trade.tradeDate);
-    return tradeDate.getMonth() === new Date().getMonth() && 
-           tradeDate.getFullYear() === currentYear;
+    return trade.tradeDate === today;
   });
-  const currentMonthPnL = calculateTotalPnL(currentMonthTrades);
-
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  const todaysPnL = calculateTotalPnL(todaysTrades);
 
   return (
     <motion.div
@@ -126,37 +116,12 @@ export default function PsychologyEnhanced() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="month"
+                    name="entryDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Month</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select month" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {months.map((month) => (
-                              <SelectItem key={month} value={month}>
-                                {month}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="year"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Year</FormLabel>
+                        <FormLabel>Entry Date</FormLabel>
                         <FormControl>
-                          <Input type="number" min="2020" max="2030" {...field} />
+                          <Input type="date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -168,12 +133,12 @@ export default function PsychologyEnhanced() {
                     name="monthlyPnL"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Monthly P&L</FormLabel>
+                        <FormLabel>Daily P&L</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
                             step="0.01" 
-                            placeholder={currentMonthPnL.toString()}
+                            placeholder={todaysPnL.toString()}
                             {...field} 
                           />
                         </FormControl>
@@ -195,7 +160,7 @@ export default function PsychologyEnhanced() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {currentMonthTrades
+                            {todaysTrades
                               .filter(trade => parseFloat(trade.profitLoss || "0") > 0)
                               .sort((a, b) => parseFloat(b.profitLoss || "0") - parseFloat(a.profitLoss || "0"))
                               .slice(0, 10)
@@ -225,7 +190,7 @@ export default function PsychologyEnhanced() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {currentMonthTrades
+                            {todaysTrades
                               .filter(trade => parseFloat(trade.profitLoss || "0") < 0)
                               .sort((a, b) => parseFloat(a.profitLoss || "0") - parseFloat(b.profitLoss || "0"))
                               .slice(0, 10)
