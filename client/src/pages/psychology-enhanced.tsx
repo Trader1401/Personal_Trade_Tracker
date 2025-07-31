@@ -269,9 +269,9 @@ export default function PsychologyEnhanced() {
             <div className="flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Current Month</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Today's Date</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {currentMonth} {currentYear}
+                  {new Date().toLocaleDateString('en-IN')}
                 </p>
               </div>
             </div>
@@ -281,19 +281,19 @@ export default function PsychologyEnhanced() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
-              {currentMonthPnL >= 0 ? (
+              {todaysPnL >= 0 ? (
                 <TrendingUp className="w-5 h-5 text-green-500" />
               ) : (
                 <TrendingDown className="w-5 h-5 text-red-500" />
               )}
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monthly P&L</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Today's P&L</p>
                 <p className={`text-2xl font-bold ${
-                  currentMonthPnL >= 0 
+                  todaysPnL >= 0 
                     ? 'text-green-600 dark:text-green-400' 
                     : 'text-red-600 dark:text-red-400'
                 }`}>
-                  {formatCurrency(currentMonthPnL)}
+                  {formatCurrency(todaysPnL)}
                 </p>
               </div>
             </div>
@@ -305,9 +305,9 @@ export default function PsychologyEnhanced() {
             <div className="flex items-center space-x-2">
               <Target className="w-5 h-5 text-purple-500" />
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Trades This Month</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Trades Today</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {currentMonthTrades.length}
+                  {todaysTrades.length}
                 </p>
               </div>
             </div>

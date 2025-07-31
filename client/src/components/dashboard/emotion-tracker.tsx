@@ -49,8 +49,8 @@ export default function EmotionTracker() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Today's Emotion</CardTitle>
-          <Button variant="ghost" size="sm" onClick={openEmotionLog}>
-            Log Entry
+          <Button variant="ghost" size="sm" onClick={saveEmotionEntry} disabled={isAdding}>
+            {isAdding ? "Saving..." : "Save Entry"}
           </Button>
         </div>
       </CardHeader>
