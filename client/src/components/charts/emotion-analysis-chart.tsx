@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { formatCurrency, calculateTotalPnL } from "@/lib/calculations";
+import { Trade } from "@shared/schema";
 
 interface EmotionAnalysisChartProps {
   trades: any[];
@@ -28,19 +29,24 @@ export default function EmotionAnalysisChart({ trades }: EmotionAnalysisChartPro
   }, {} as Record<string, any[]>);
 
   const emotionData = Object.entries(emotionGroups).map(([emotion, emotionTrades]) => {
-    const pnl = calculateTotalPnL(emotionTrades);
-    const winningTrades = emotionTrades.filter(t => parseFloat(t.profitLoss?.toString() || "0") > 0).length;
-    const winRate = emotionTrades.length > 0 ? (winningTrades / emotionTrades.length) * 100 : 0;
-    
-    return {
-      emotion,
-      trades: emotionTrades.length,
-      pnl,
-      winRate,
-      avgPnL: emotionTrades.length > 0 ? pnl / emotionTrades.length : 0,
-      color: EMOTION_COLORS[emotion as keyof typeof EMOTION_COLORS] || "hsl(210, 40%, 60%)",
-    };
-  }).sort((a, b) => b.pnl - a.pnl);
+  const tradesArr = emotionTrades as Trade[];
+
+  const pnl = calculateTotalPnL(tradesArr);
+  const winningTrades = tradesArr.filter(
+    (t) => parseFloat(t.profitLoss?.toString() || "0") > 0
+  ).length;
+  const winRate = tradesArr.length > 0 ? (winningTrades / tradesArr.length) * 100 : 0;
+
+  return {
+    emotion,
+    trades: tradesArr.length,
+    pnl,
+    winRate,
+    avgPnL: tradesArr.length > 0 ? pnl / tradesArr.length : 0,
+    color: EMOTION_COLORS[emotion as keyof typeof EMOTION_COLORS] || "hsl(210, 40%, 60%)",
+  };
+}).sort((a, b) => b.pnl - a.pnl);
+
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -105,9 +111,9 @@ export default function EmotionAnalysisChart({ trades }: EmotionAnalysisChartPro
                 <Bar
                   dataKey="pnl"
                   radius={[4, 4, 0, 0]}
-                  fill={(entry) => entry.color}
+                  
                 >
-                  {emotionData.map((entry, index) => (
+                {emotionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
