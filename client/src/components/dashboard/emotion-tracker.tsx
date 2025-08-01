@@ -3,6 +3,8 @@ import { Smile, Meh, Frown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { usePsychology } from "@/hooks/use-psychology";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 type Emotion = "confident" | "neutral" | "anxious";
@@ -10,6 +12,8 @@ type Emotion = "confident" | "neutral" | "anxious";
 export default function EmotionTracker() {
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>("confident");
   const [note, setNote] = useState("");
+  const { addEntry, isAdding } = usePsychology();
+  const { toast } = useToast();
 
   const emotions = [
     { 
@@ -37,6 +41,43 @@ export default function EmotionTracker() {
 
   const handleEmotionSelect = (emotion: Emotion) => {
     setSelectedEmotion(emotion);
+  };
+
+  const saveEmotionEntry = async () => {
+    if (!selectedEmotion && !note.trim()) {
+      toast({
+        title: "Nothing to save",
+        description: "Please select an emotion or add a note",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await addEntry({
+        entryDate: new Date().toISOString().split('T')[0],
+        dailyPnL: "0", // Will be calculated from today's trades
+        bestTradeId: null,
+        worstTradeId: null,
+        mentalReflections: note.trim() || `Feeling ${selectedEmotion} today`,
+        improvementAreas: "",
+      });
+
+      toast({
+        title: "Entry Saved!",
+        description: "Your daily psychology entry has been saved",
+      });
+
+      // Reset form
+      setNote("");
+      setSelectedEmotion("confident");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save psychology entry",
+        variant: "destructive",
+      });
+    }
   };
 
   const openEmotionLog = () => {
