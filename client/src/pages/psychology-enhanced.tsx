@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Calendar, TrendingUp, TrendingDown, Target, Brain } from "lucide-react";
+import { Plus, Calendar, TrendingUp, TrendingDown, Target, Brain, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { usePsychology } from "@/hooks/use-psychology";
+import { usePsychology, useUpdatePsychologyEntry, useDeletePsychologyEntry } from "@/hooks/use-psychology";
 import { useTrades } from "@/hooks/use-trades";
 import { calculateTotalPnL, formatCurrency } from "@/lib/calculations";
 
@@ -31,7 +31,11 @@ type PsychologyForm = z.infer<typeof psychologySchema>;
 
 export default function PsychologyEnhanced() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const { entries: psychologyEntries, addEntry: addPsychologyEntry, isAdding, isLoading } = usePsychology();
+  const updateEntryMutation = useUpdatePsychologyEntry();
+  const deleteEntryMutation = useDeletePsychologyEntry();
   const { trades } = useTrades();
   const { toast } = useToast();
 
@@ -49,31 +53,83 @@ export default function PsychologyEnhanced() {
 
   const onSubmit = async (data: PsychologyForm) => {
     try {
-      await addPsychologyEntry({
-        entryDate: data.entryDate,
-        monthlyPnL: data.monthlyPnL?.toString(),
-        bestTradeId: data.bestTradeId,
-        worstTradeId: data.worstTradeId,
-        mentalReflections: data.mentalReflections,
-        improvementAreas: data.improvementAreas,
-      });
+      if (selectedEntry) {
+        // Update existing entry
+        await updateEntryMutation.mutateAsync({
+          id: selectedEntry.id,
+          entryDate: data.entryDate,
+          monthlyPnL: data.monthlyPnL?.toString(),
+          bestTradeId: data.bestTradeId,
+          worstTradeId: data.worstTradeId,
+          mentalReflections: data.mentalReflections,
+          improvementAreas: data.improvementAreas,
+        });
+        
+        toast({
+          title: "Psychology Entry Updated!",
+          description: `Entry for ${data.entryDate} updated successfully.`,
+        });
+        
+        setSelectedEntry(null);
+        setIsEditDialogOpen(false);
+      } else {
+        // Add new entry
+        await addPsychologyEntry({
+          entryDate: data.entryDate,
+          monthlyPnL: data.monthlyPnL?.toString(),
+          bestTradeId: data.bestTradeId,
+          worstTradeId: data.worstTradeId,
+          mentalReflections: data.mentalReflections,
+          improvementAreas: data.improvementAreas,
+        });
+        
+        toast({
+          title: "Psychology Entry Added!",
+          description: `Entry for ${data.entryDate} saved successfully.`,
+        });
+        
+        setIsAddDialogOpen(false);
+      }
 
       form.reset();
-      setIsAddDialogOpen(false);
-      
-      // Show success message
-      toast({
-        title: "Psychology Entry Added!",
-        description: `Psychology entry for ${data.entryDate} saved successfully.`,
-        variant: "default",
-      });
     } catch (error) {
-      console.error('Failed to add psychology entry:', error);
+      console.error('Failed to save psychology entry:', error);
       toast({
-        title: "Error Adding Entry",
+        title: "Error Saving Entry",
         description: "Failed to save psychology entry. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleEdit = (entry: any) => {
+    setSelectedEntry(entry);
+    form.reset({
+      entryDate: entry.entryDate,
+      monthlyPnL: entry.monthlyPnL ? parseFloat(entry.monthlyPnL) : 0,
+      bestTradeId: entry.bestTradeId,
+      worstTradeId: entry.worstTradeId,
+      mentalReflections: entry.mentalReflections,
+      improvementAreas: entry.improvementAreas,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this psychology entry?')) {
+      try {
+        await deleteEntryMutation.mutateAsync(id);
+        toast({
+          title: "Entry Deleted",
+          description: "Psychology entry deleted successfully.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete psychology entry.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -101,14 +157,19 @@ export default function PsychologyEnhanced() {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => {
+              setSelectedEntry(null);
+              form.reset();
+            }}>
               <Plus className="w-4 h-4 mr-2" />
               Add Entry
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add Psychology Entry</DialogTitle>
+              <DialogTitle>
+                {selectedEntry ? "Edit Psychology Entry" : "Add Psychology Entry"}
+              </DialogTitle>
             </DialogHeader>
             
             <Form {...form}>
@@ -248,12 +309,116 @@ export default function PsychologyEnhanced() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setIsAddDialogOpen(false)}
+                    onClick={() => {
+                      setIsAddDialogOpen(false);
+                      setIsEditDialogOpen(false);
+                      setSelectedEntry(null);
+                    }}
+                    disabled={isAdding || updateEntryMutation.isPending}
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isAdding || updateEntryMutation.isPending}>
+                    {(isAdding || updateEntryMutation.isPending) ? "Saving..." : (selectedEntry ? "Update Entry" : "Add Entry")}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Psychology Entry</DialogTitle>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="entryDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Entry Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="monthlyPnL"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Daily P&L</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="0"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="mentalReflections"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mental Reflections</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="How did you feel during trades today? What emotions dominated?"
+                          rows={4}
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="improvementAreas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Improvement Areas</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="What specific areas need improvement today?"
+                          rows={4}
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsEditDialogOpen(false);
+                      setSelectedEntry(null);
+                    }}
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isAdding}>
-                    {isAdding ? "Adding..." : "Add Entry"}
+                  <Button type="submit" disabled={updateEntryMutation.isPending}>
+                    {updateEntryMutation.isPending ? "Updating..." : "Update Entry"}
                   </Button>
                 </div>
               </form>
@@ -342,13 +507,13 @@ export default function PsychologyEnhanced() {
           ) : (
             <div className="space-y-6">
               {psychologyEntries
-                .sort((a: any, b: any) => b.year - a.year || months.indexOf(b.month) - months.indexOf(a.month))
+                .sort((a: any, b: any) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
                 .map((entry: any) => (
                   <div key={entry.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <Badge variant="outline" className="text-sm">
-                          {entry.month} {entry.year}
+                          {new Date(entry.entryDate).toLocaleDateString('en-IN')}
                         </Badge>
                         {entry.monthlyPnL && (
                           <div className={`text-sm font-semibold ${
@@ -360,8 +525,22 @@ export default function PsychologyEnhanced() {
                           </div>
                         )}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(entry.createdAt).toLocaleDateString()}
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(entry)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(entry.id)}
+                          disabled={deleteEntryMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                     

@@ -56,7 +56,7 @@ export default function EmotionTracker() {
     try {
       await addEntry({
         entryDate: new Date().toISOString().split('T')[0],
-        dailyPnL: "0", // Will be calculated from today's trades
+        monthlyPnL: "0", // Will be calculated from today's trades
         bestTradeId: null,
         worstTradeId: null,
         mentalReflections: note.trim() || `Feeling ${selectedEmotion} today`,
