@@ -17,13 +17,6 @@ rm -rf dist
 echo "Building React frontend with Vite..."
 npx vite build
 
-# Ensure we only have the frontend build, no backend files
-echo "Cleaning up build output for static deployment..."
-if [ -f "dist/index.js" ]; then
-  echo "Removing backend index.js file..."
-  rm dist/index.js
-fi
-
 # Move files from dist/public to dist root for Netlify (if needed)
 if [ -d "dist/public" ]; then
   echo "Restructuring build output..."
@@ -31,6 +24,13 @@ if [ -d "dist/public" ]; then
   mv dist/public/* dist/
   # Remove empty public directory
   rmdir dist/public
+fi
+
+# Ensure we only have the frontend build, no backend files
+echo "Cleaning up build output for static deployment..."
+if [ -f "dist/index.js" ]; then
+  echo "Removing backend index.js file..."
+  rm dist/index.js
 fi
 
 # Create _redirects file for SPA routing

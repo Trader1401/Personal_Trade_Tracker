@@ -150,12 +150,12 @@ export class GoogleSheetsAPI {
   }
 
   async updatePsychologyEntry(id: number, entry: Partial<PsychologyEntry>): Promise<PsychologyEntry> {
-    const result = await this.makeRequest("updatePsychologyEntry", { data: { id, ...entry } });
+    const result = await this.makeRequest("updatePsychologyEntry", { id, ...entry });
     return result.data || result;
   }
 
   async deletePsychologyEntry(id: number): Promise<void> {
-    const result = await this.makeRequest("deletePsychologyEntry", { data: { id } });
+    const result = await this.makeRequest("deletePsychologyEntry", { id });
     return result.data || result;
   }
 }

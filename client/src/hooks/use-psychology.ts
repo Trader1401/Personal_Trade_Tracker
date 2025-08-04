@@ -26,6 +26,7 @@ export interface InsertPsychologyEntry {
 
 export function usePsychologyEntries() {
   const { settings } = useAppContext();
+  const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: ['psychology-entries'],
@@ -38,9 +39,9 @@ export function usePsychologyEntries() {
       return googleSheetsAPI.getPsychologyEntries();
     },
     enabled: !!(settings?.googleScriptUrl && settings?.googleSheetId),
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: true
   });
 }
 
@@ -59,7 +60,7 @@ export function useAddPsychologyEntry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['psychology-entries'] });
-      queryClient.refetchQueries({ queryKey: ['psychology-entries'] });
+      queryClient.refetchQueries({ queryKey: ['psychology-entries'] }, { immediate: true });
     },
   });
 }
@@ -79,7 +80,8 @@ export function useUpdatePsychologyEntry() {
       return googleSheetsAPI.updatePsychologyEntry(id, entry);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/psychology-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['psychology-entries'] });
+      queryClient.refetchQueries({ queryKey: ['psychology-entries'] }, { immediate: true });
     },
   });
 }
