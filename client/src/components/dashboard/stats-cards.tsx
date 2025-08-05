@@ -1,11 +1,13 @@
 import { TrendingUp, TrendingDown, Target, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTrades } from "@/hooks/use-trades";
+import { useStrategies } from "@/hooks/use-strategies";
 import { calculateTotalPnL, calculateWinRate, formatCurrency, formatPercentage } from "@/lib/calculations";
 import { getTradesByDateRange } from "@/lib/calculations";
 
 export default function StatsCards() {
   const { trades, isLoading } = useTrades();
+  const { strategies } = useStrategies();
 
   if (isLoading) {
     return (
@@ -32,8 +34,8 @@ export default function StatsCards() {
   const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1).toISOString().split('T')[0];
   const monthEnd = new Date(thisMonth.getFullYear(), thisMonth.getMonth() + 1, 0).toISOString().split('T')[0];
   const monthlyTrades = getTradesByDateRange(trades, monthStart, monthEnd);
-  const monthlyPnL = calculateTotalPnL(monthlyTrades);
-  const winRate = calculateWinRate(trades);
+  const monthlyPnL = calculateTotalPnL(monthlyTrades, strategies);
+  const winRate = calculateWinRate(trades, strategies);
 
   const stats = [
     {

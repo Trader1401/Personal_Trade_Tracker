@@ -14,6 +14,7 @@ import MonthlyPerformanceChart from "@/components/charts/monthly-performance-cha
 import StrategyBreakdownChart from "@/components/charts/strategy-breakdown-chart";
 import EmotionAnalysisChart from "@/components/charts/emotion-analysis-chart";
 import { useTrades } from "@/hooks/use-trades";
+import { useStrategies } from "@/hooks/use-strategies";
 import {
   calculateTotalPnL,
   calculateWinRate,
@@ -28,6 +29,7 @@ import {
 
 export default function Analytics() {
   const { trades, isLoading } = useTrades();
+  const { strategies } = useStrategies();
   const [timeRange, setTimeRange] = useState("all");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
@@ -94,17 +96,18 @@ export default function Analytics() {
   const maxDrawdown = calculateMaxDrawdown(filteredTrades);
   const profitFactor = calculateProfitFactor(filteredTrades);
 
-  const strategyGroups = groupTradesByStrategy(filteredTrades);
+  const strategyGroups = groupTradesByStrategy(filteredTrades, strategies);
   const strategyPerformance = Object.entries(strategyGroups).map(([strategy, strategyTrades]) => ({
     strategy,
     trades: strategyTrades.length,
-    pnl: calculateTotalPnL(strategyTrades),
-    winRate: calculateWinRate(strategyTrades),
+    pnl: calculateTotalPnL(strategyTrades, strategies),
+    winRate: calculateWinRate(strategyTrades, strategies),
   }));
 
   // Additional analytics
-  const winningTrades = filteredTrades.filter(t => parseFloat(t.profitLoss?.toString() || "0") > 0);
-  const losingTrades = filteredTrades.filter(t => parseFloat(t.profitLoss?.toString() || "0") < 0);
+  const analyticsReadyTrades = filteredTrades.filter(t => t.isTradeTaken && (!t.whichSetup || strategies.find(s => s.name === t.whichSetup)?.status === 'active'));
+  const winningTrades = analyticsReadyTrades.filter(t => parseFloat(t.profitLoss?.toString() || "0") > 0);
+  const losingTrades = analyticsReadyTrades.filter(t => parseFloat(t.profitLoss?.toString() || "0") < 0);
   const bestTrade = filteredTrades.reduce((best, trade) => {
     const pnl = parseFloat(trade.profitLoss?.toString() || "0");
     const bestPnl = parseFloat(best?.profitLoss?.toString() || "0");
@@ -117,16 +120,16 @@ export default function Analytics() {
   }, filteredTrades[0]);
 
   // Risk metrics
-  const avgTradeSize = filteredTrades.length > 0 
-    ? filteredTrades.reduce((sum, trade) => {
+  const avgTradeSize = analyticsReadyTrades.length > 0 
+    ? analyticsReadyTrades.reduce((sum, trade) => {
         const entryPrice = parseFloat(trade.entryPrice?.toString() || "0");
         return sum + (entryPrice * trade.quantity);
-      }, 0) / filteredTrades.length
+      }, 0) / analyticsReadyTrades.length
     : 0;
 
-  const sharpeRatio = calculateSharpeRatio(filteredTrades);
-  const maxConsecutiveLosses = calculateMaxConsecutiveLosses(filteredTrades);
-  const maxConsecutiveWins = calculateMaxConsecutiveWins(filteredTrades);
+  const sharpeRatio = calculateSharpeRatio(analyticsReadyTrades);
+  const maxConsecutiveLosses = calculateMaxConsecutiveLosses(analyticsReadyTrades);
+  const maxConsecutiveWins = calculateMaxConsecutiveWins(analyticsReadyTrades);
   const metrics = [
     {
       title: "Total P&L",

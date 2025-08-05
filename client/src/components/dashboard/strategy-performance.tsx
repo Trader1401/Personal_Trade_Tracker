@@ -6,7 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { useStrategies } from "@/hooks/use-strategies";
 import { useTrades } from "@/hooks/use-trades";
-import { calculateTotalPnL, calculateWinRate, formatCurrency, formatPercentage } from "@/lib/calculations";
+import { calculateTotalPnL, calculateWinRate, formatCurrency, formatPercentage, getAnalyticsReadyTrades } from "@/lib/calculations";
 
 export default function StrategyPerformance() {
   const { strategies, isLoading: strategiesLoading } = useStrategies();
@@ -37,11 +37,11 @@ export default function StrategyPerformance() {
   }
 
   const getStrategyStats = (strategyName: string) => {
-    const strategyTrades = trades.filter(trade => trade.whichSetup === strategyName);
+    const strategyTrades = getAnalyticsReadyTrades(trades, strategies).filter(trade => trade.whichSetup === strategyName);
     return {
       trades: strategyTrades.length,
-      winRate: calculateWinRate(strategyTrades),
-      pnl: calculateTotalPnL(strategyTrades),
+      winRate: calculateWinRate(strategyTrades, strategies),
+      pnl: calculateTotalPnL(strategyTrades, strategies),
     };
   };
 

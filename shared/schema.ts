@@ -10,7 +10,7 @@ export const insertTradeSchema = z.object({
   stopLoss: z.string().nullable().optional(),
   targetPrice: z.string().nullable().optional(),
   profitLoss: z.string().nullable().optional(),
-  setupFollowed: z.boolean().default(false),
+  isTradeTaken: z.boolean().default(false),
   whichSetup: z.string().nullable().optional(),
   emotion: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),

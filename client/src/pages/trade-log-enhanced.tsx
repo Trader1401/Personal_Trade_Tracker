@@ -714,6 +714,11 @@ export default function TradeLogEnhanced() {
                             ) : "-"}
                           </TableCell>
                           <TableCell>
+                            <Badge variant={trade.isTradeTaken ? "default" : "secondary"}>
+                              {trade.isTradeTaken ? "Yes" : "No"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
                             {trade.whichSetup ? (
                               <Badge variant="outline">{trade.whichSetup}</Badge>
                             ) : "-"}
@@ -728,6 +733,21 @@ export default function TradeLogEnhanced() {
                               <div className="truncate" title={trade.notes}>
                                 {trade.notes}
                               </div>
+                            ) : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {trade.screenshotLink ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(trade.screenshotLink, '_blank');
+                                }}
+                                className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </Button>
                             ) : "-"}
                           </TableCell>
                           <TableCell>

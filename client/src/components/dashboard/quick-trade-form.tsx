@@ -134,6 +134,32 @@ export default function QuickTradeForm() {
               />
             </div>
             
+            <FormField
+              control={form.control}
+              name="isTradeTaken"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center space-x-2">
+                    <span>Did I take this trade?</span>
+                  </FormLabel>
+                  <FormControl>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                      />
+                      <span className="text-sm text-gray-600">
+                        {field.value ? "Yes, I took this trade" : "No, I didn't take this trade"}
+                      </span>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button 
                 type="submit" 

@@ -295,6 +295,32 @@ export default function TradeDetailModal({ trade, isOpen, onClose }: TradeDetail
                     
                     <FormField
                       control={form.control}
+                      name="isTradeTaken"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2">
+                            <span>Did I take this trade?</span>
+                          </FormLabel>
+                            <FormControl>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={(e) => field.onChange(e.target.checked)}
+                                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                />
+                                <span className="text-sm text-gray-600">
+                                  {field.value ? "Yes, I took this trade" : "No, I didn't take this trade"}
+                                </span>
+                              </div>
+                            </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
                       name="whichSetup"
                       render={({ field }) => (
                         <FormItem>
@@ -537,10 +563,10 @@ export default function TradeDetailModal({ trade, isOpen, onClose }: TradeDetail
                     )}
                     
                     <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Setup Followed</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Trade Taken</span>
                       <div className="mt-1">
-                        <Badge variant={trade.setupFollowed ? "default" : "destructive"}>
-                          {trade.setupFollowed ? "Yes" : "No"}
+                        <Badge variant={trade.isTradeTaken ? "default" : "destructive"}>
+                          {trade.isTradeTaken ? "Yes" : "No"}
                         </Badge>
                       </div>
                     </div>

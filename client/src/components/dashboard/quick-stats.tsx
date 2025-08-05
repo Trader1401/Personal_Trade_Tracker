@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useTrades } from "@/hooks/use-trades";
 import { useStrategies } from "@/hooks/use-strategies";
-import { calculateTotalPnL, formatCurrency, groupTradesByStrategy } from "@/lib/calculations";
+import { calculateTotalPnL, formatCurrency, groupTradesByStrategy, getAnalyticsReadyTrades } from "@/lib/calculations";
 
 export default function QuickStats() {
   const { trades, isLoading: tradesLoading } = useTrades();
@@ -28,25 +28,26 @@ export default function QuickStats() {
     );
   }
 
-  const avgTradeSize = trades.length > 0
-    ? trades.reduce((sum, trade) => {
+  const analyticsReadyTrades = getAnalyticsReadyTrades(trades, strategies);
+  const avgTradeSize = analyticsReadyTrades.length > 0
+    ? analyticsReadyTrades.reduce((sum, trade) => {
         const entryPrice = parseFloat(trade.entryPrice?.toString() || "0");
         return sum + (entryPrice * trade.quantity);
-      }, 0) / trades.length
+      }, 0) / analyticsReadyTrades.length
     : 0;
 
-  const strategyPerformance = groupTradesByStrategy(trades);
+  const strategyPerformance = groupTradesByStrategy(trades, strategies);
   const bestStrategy = Object.entries(strategyPerformance)
     .map(([strategy, strategyTrades]) => ({
       strategy,
-      pnl: calculateTotalPnL(strategyTrades),
+      pnl: calculateTotalPnL(strategyTrades, strategies),
     }))
     .sort((a, b) => b.pnl - a.pnl)[0];
 
   const worstStrategy = Object.entries(strategyPerformance)
     .map(([strategy, strategyTrades]) => ({
       strategy,
-      pnl: calculateTotalPnL(strategyTrades),
+      pnl: calculateTotalPnL(strategyTrades, strategies),
     }))
     .sort((a, b) => a.pnl - b.pnl)[0];
 

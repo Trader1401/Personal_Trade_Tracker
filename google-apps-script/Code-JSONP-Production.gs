@@ -19,7 +19,7 @@ const CONFIG = {
 // CORRECT Headers that match UI exactly
 const TRADES_HEADERS = [
   'ID', 'Trade Date', 'Stock Name', 'Quantity', 'Entry Price', 'Exit Price', 
-  'Stop Loss', 'Target Price', 'P&L', 'Setup Followed', 'Strategy', 'Emotion', 
+  'Stop Loss', 'Target Price', 'P&L', 'Is Trade Taken', 'Strategy', 'Emotion', 
   'Trade Notes', 'Psychology Reflections', 'Screenshot Link', 'Created At'
 ];
 

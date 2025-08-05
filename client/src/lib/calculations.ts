@@ -151,8 +151,9 @@ export function groupTradesByStrategy(trades: Trade[]): Record<string, Trade[]> 
   }, {} as Record<string, Trade[]>);
 }
 
-export function calculateProfitFactor(trades: Trade[]): number {
-  const winningTrades = trades.filter(trade => {
+export function calculateProfitFactor(trades: Trade[], strategies: Strategy[] = []): number {
+  const analyticsReadyTrades = getAnalyticsReadyTrades(trades, strategies);
+  const winningTrades = analyticsReadyTrades.filter(trade => {
     let pnl = 0;
     if (trade.profitLoss) {
       pnl = typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : trade.profitLoss;
@@ -166,7 +167,7 @@ export function calculateProfitFactor(trades: Trade[]): number {
     return pnl > 0;
   });
   
-  const losingTrades = trades.filter(trade => {
+  const losingTrades = analyticsReadyTrades.filter(trade => {
     let pnl = 0;
     if (trade.profitLoss) {
       pnl = typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : trade.profitLoss;
