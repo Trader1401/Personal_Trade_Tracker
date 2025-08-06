@@ -1,5 +1,21 @@
 import { Trade } from "@shared/schema";
 
+export function getAnalyticsReadyTrades(trades: Trade[], strategies: any[] = []): Trade[] {
+  return trades.filter(trade => {
+    // Only include trades that were actually taken
+    if (!trade.isTradeTaken) return false;
+    
+    // If no strategies provided, include all taken trades
+    if (strategies.length === 0) return true;
+    
+    // Find the strategy for this trade
+    const strategy = strategies.find(s => s.name === trade.whichSetup);
+    
+    // Only include if strategy exists and is active
+    return strategy && strategy.status === 'active';
+  });
+}
+
 export function calculatePnL(entryPrice: number, exitPrice: number, quantity: number): number {
   // Handle string inputs and convert to numbers
   const entry = typeof entryPrice === 'string' ? parseFloat(entryPrice) : entryPrice;
