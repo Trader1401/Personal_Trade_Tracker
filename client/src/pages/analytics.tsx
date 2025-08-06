@@ -90,11 +90,11 @@ export default function Analytics() {
   }
 
   const totalPnL = calculateTotalPnL(filteredTrades);
-  const winRate = calculateWinRate(filteredTrades);
-  const avgWin = calculateAverageWin(filteredTrades);
-  const avgLoss = calculateAverageLoss(filteredTrades);
-  const maxDrawdown = calculateMaxDrawdown(filteredTrades);
-  const profitFactor = calculateProfitFactor(filteredTrades);
+  const winRate = calculateWinRate(filteredTrades, strategies);
+  const avgWin = calculateAverageWin(filteredTrades, strategies);
+  const avgLoss = calculateAverageLoss(filteredTrades, strategies);
+  const maxDrawdown = calculateMaxDrawdown(filteredTrades, strategies);
+  const profitFactor = calculateProfitFactor(filteredTrades, strategies);
 
   const strategyGroups = groupTradesByStrategy(filteredTrades, strategies);
   const strategyPerformance = Object.entries(strategyGroups).map(([strategy, strategyTrades]) => ({

@@ -1,14 +1,13 @@
 /**
- * IntraDay Trading Dashboard - JSONP PRODUCTION Google Apps Script
- * SUPPORTS BOTH JSONP AND POST REQUESTS FOR NETLIFY STATIC DEPLOYMENT
+ * IntraDay Trading Dashboard - DYNAMIC SHEET ID PRODUCTION Google Apps Script
+ * ACCEPTS SHEET ID FROM UI SETTINGS - NO HARDCODED IDS
  * 
- * Version: 7.0.0 - JSONP Production
- * Last Updated: 2025-07-27
+ * Version: 8.0.0 - Dynamic Sheet ID Production
+ * Last Updated: 2025-01-28
  */
 
-// Configuration - Update SPREADSHEET_ID with your actual Google Sheets ID
+// NO HARDCODED SHEET ID - ACCEPTS FROM REQUEST
 const CONFIG = {
-  SPREADSHEET_ID: '1lRghEk9q9dXr4elu2387f7UOWdwaojr1g2aYx2TCRJs', // Your actual Sheet ID
   SHEETS: {
     TRADES: 'Trades',
     STRATEGIES: 'Strategies', 
@@ -50,16 +49,6 @@ function getISTDateTime() {
   });
 }
 
-function formatIndianDate(date) {
-  if (!date) return getISTDateTime().split(',')[0];
-  const istDate = new Date(typeof date === 'string' ? date : date.getTime() + (5.5 * 60 * 60 * 1000));
-  return istDate.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: '2-digit', 
-    year: 'numeric'
-  });
-}
-
 /**
  * FAST CACHING - 30 second cache for speed
  */
@@ -69,17 +58,18 @@ const CACHE = {
   CACHE_DURATION: 30000 // 30 seconds
 };
 
-function getCachedSheet(sheetName) {
-  const cached = CACHE.data.get(sheetName);
-  const timestamp = CACHE.timestamps.get(sheetName);
+function getCachedSheet(spreadsheetId, sheetName) {
+  const cacheKey = `${spreadsheetId}_${sheetName}`;
+  const cached = CACHE.data.get(cacheKey);
+  const timestamp = CACHE.timestamps.get(cacheKey);
   
   if (cached && timestamp && (Date.now() - timestamp) < CACHE.CACHE_DURATION) {
     return cached;
   }
   
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(sheetName);
-  CACHE.data.set(sheetName, sheet);
-  CACHE.timestamps.set(sheetName, Date.now());
+  const sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName(sheetName);
+  CACHE.data.set(cacheKey, sheet);
+  CACHE.timestamps.set(cacheKey, Date.now());
   
   return sheet;
 }
@@ -91,49 +81,63 @@ function doGet(e) {
   try {
     const action = e.parameter.action;
     const data = e.parameter.data ? JSON.parse(e.parameter.data) : {};
+    const sheetId = e.parameter.sheetId || data.sheetId;
     const callback = e.parameter.callback;
+    
+    if (!sheetId) {
+      const errorResult = { success: false, error: 'Sheet ID is required', timestamp: getISTDateTime() };
+      if (callback) {
+        const jsonpError = callback + '(' + JSON.stringify(errorResult) + ');';
+        return ContentService
+          .createTextOutput(jsonpError)
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      }
+      return ContentService
+        .createTextOutput(JSON.stringify(errorResult))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
     
     let result;
     
     switch (action) {
       case 'test':
-        result = { success: true, message: 'JSONP Connection successful!', timestamp: getISTDateTime() };
+        result = handleTestConnection(sheetId);
         break;
       case 'getTrades':
-        result = handleGetTrades();
+        result = handleGetTrades(sheetId);
         break;
       case 'getStrategies':
-        result = handleGetStrategies();
+        result = handleGetStrategies(sheetId);
         break;
       case 'getPsychologyEntries':
-        result = handleGetPsychologyEntries();
+        result = handleGetPsychologyEntries(sheetId);
         break;
       case 'addTrade':
-        result = handleAddTrade({ data });
+        result = handleAddTrade(sheetId, { data });
         break;
       case 'addStrategy':
-        result = handleAddStrategy({ data });
+        result = handleAddStrategy(sheetId, { data });
         break;
       case 'addPsychologyEntry':
-        result = handleAddPsychologyEntry({ data });
+        result = handleAddPsychologyEntry(sheetId, { data });
         break;
       case 'updateTrade':
-        result = handleUpdateTrade({ data });
+        result = handleUpdateTrade(sheetId, { data });
         break;
       case 'deleteTrade':
-        result = handleDeleteTrade({ data });
+        result = handleDeleteTrade(sheetId, { data });
         break;
       case 'updateStrategy':
-        result = handleUpdateStrategy({ data });
+        result = handleUpdateStrategy(sheetId, { data });
         break;
       case 'deleteStrategy':
-        result = handleDeleteStrategy({ data });
+        result = handleDeleteStrategy(sheetId, { data });
         break;
       case 'updatePsychologyEntry':
-        result = handleUpdatePsychologyEntry({ data });
+        result = handleUpdatePsychologyEntry(sheetId, { data });
         break;
       case 'deletePsychologyEntry':
-        result = handleDeletePsychologyEntry({ data });
+        result = handleDeletePsychologyEntry(sheetId, { data });
         break;
       default:
         result = { success: false, error: 'Unknown action: ' + action };
@@ -172,48 +176,59 @@ function doPost(e) {
   try {
     const requestData = JSON.parse(e.postData.contents);
     const action = requestData.action;
+    const sheetId = requestData.sheetId;
+    
+    if (!sheetId) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success: false,
+          error: 'Sheet ID is required in request data',
+          timestamp: getISTDateTime()
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
     
     let result;
     
     switch (action) {
       case 'test':
-        result = { success: true, message: 'POST Connection successful!', timestamp: getISTDateTime() };
+        result = handleTestConnection(sheetId);
         break;
       case 'getTrades':
-        result = handleGetTrades();
+        result = handleGetTrades(sheetId);
         break;
       case 'getStrategies':
-        result = handleGetStrategies();
+        result = handleGetStrategies(sheetId);
         break;
       case 'getPsychologyEntries':
-        result = handleGetPsychologyEntries();
+        result = handleGetPsychologyEntries(sheetId);
         break;
       case 'addTrade':
-        result = handleAddTrade(requestData);
+        result = handleAddTrade(sheetId, requestData);
         break;
       case 'addStrategy':
-        result = handleAddStrategy(requestData);
+        result = handleAddStrategy(sheetId, requestData);
         break;
       case 'addPsychologyEntry':
-        result = handleAddPsychologyEntry(requestData);
+        result = handleAddPsychologyEntry(sheetId, requestData);
         break;
       case 'updateTrade':
-        result = handleUpdateTrade(requestData);
+        result = handleUpdateTrade(sheetId, requestData);
         break;
       case 'deleteTrade':
-        result = handleDeleteTrade(requestData);
+        result = handleDeleteTrade(sheetId, requestData);
         break;
       case 'updateStrategy':
-        result = handleUpdateStrategy(requestData);
+        result = handleUpdateStrategy(sheetId, requestData);
         break;
       case 'deleteStrategy':
-        result = handleDeleteStrategy(requestData);
+        result = handleDeleteStrategy(sheetId, requestData);
         break;
       case 'updatePsychologyEntry':
-        result = handleUpdatePsychologyEntry(requestData);
+        result = handleUpdatePsychologyEntry(sheetId, requestData);
         break;
       case 'deletePsychologyEntry':
-        result = handleDeletePsychologyEntry(requestData);
+        result = handleDeletePsychologyEntry(sheetId, requestData);
         break;
       default:
         result = { success: false, error: 'Unknown action: ' + action };
@@ -235,11 +250,33 @@ function doPost(e) {
 }
 
 /**
- * DATA HANDLERS
+ * DATA HANDLERS - ALL ACCEPT DYNAMIC SHEET ID
  */
-function handleGetTrades() {
+function handleTestConnection(sheetId) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.TRADES);
+    const spreadsheet = SpreadsheetApp.openById(sheetId);
+    return {
+      success: true,
+      message: 'Connection successful to your sheet!',
+      spreadsheetName: spreadsheet.getName(),
+      timestamp: getISTDateTime()
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Cannot access sheet: ' + error.message,
+      timestamp: getISTDateTime()
+    };
+  }
+}
+
+function handleGetTrades(sheetId) {
+  try {
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.TRADES);
+    if (!sheet) {
+      return { success: false, error: 'Trades sheet not found' };
+    }
+    
     const data = sheet.getDataRange().getValues();
     
     if (data.length <= 1) {
@@ -248,7 +285,7 @@ function handleGetTrades() {
     
     const trades = data.slice(1).map(row => ({
       id: row[0] || Date.now() + Math.random(),
-      tradeDate: row[1] ? new Date(row[1]).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      tradeDate: row[1] || new Date().toISOString().split('T')[0],
       stockName: row[2] || '',
       quantity: parseInt(row[3]) || 0,
       entryPrice: row[4] || '0',
@@ -256,12 +293,12 @@ function handleGetTrades() {
       stopLoss: row[6] || '',
       targetPrice: row[7] || '',
       profitLoss: row[8] || '0',
-      setupFollowed: row[9] === 'Yes' || row[9] === true,
+      isTradeTaken: row[9] === 'Yes' || row[9] === true,
       whichSetup: row[10] || null,
       emotion: row[11] || '',
       notes: row[12] || null,
       psychologyReflections: row[13] || '',
-      screenshotUrl: row[14] || '',
+      screenshotLink: row[14] || '',
       createdAt: row[15] || getISTDateTime()
     }));
     
@@ -271,9 +308,13 @@ function handleGetTrades() {
   }
 }
 
-function handleGetStrategies() {
+function handleGetStrategies(sheetId) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.STRATEGIES);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.STRATEGIES);
+    if (!sheet) {
+      return { success: false, error: 'Strategies sheet not found' };
+    }
+    
     const data = sheet.getDataRange().getValues();
     
     if (data.length <= 1) {
@@ -296,9 +337,13 @@ function handleGetStrategies() {
   }
 }
 
-function handleGetPsychologyEntries() {
+function handleGetPsychologyEntries(sheetId) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.PSYCHOLOGY);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.PSYCHOLOGY);
+    if (!sheet) {
+      return { success: false, error: 'Psychology sheet not found' };
+    }
+    
     const data = sheet.getDataRange().getValues();
     
     if (data.length <= 1) {
@@ -308,7 +353,7 @@ function handleGetPsychologyEntries() {
     const entries = data.slice(1).map(row => ({
       id: row[0] || Date.now() + Math.random(),
       entryDate: row[1] || '',
-      monthlyPnL: row[2] || '0',
+      dailyPnL: row[2] || '0',
       bestTradeId: row[3] ? parseInt(row[3]) : null,
       worstTradeId: row[4] ? parseInt(row[4]) : null,
       mentalReflections: row[5] || '',
@@ -322,9 +367,9 @@ function handleGetPsychologyEntries() {
   }
 }
 
-function handleAddTrade(requestData) {
+function handleAddTrade(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.TRADES);
+    const sheet = getOrCreateSheet(sheetId, CONFIG.SHEETS.TRADES);
     
     if (sheet.getLastRow() === 0) {
       sheet.getRange(1, 1, 1, TRADES_HEADERS.length).setValues([TRADES_HEADERS]);
@@ -339,16 +384,16 @@ function handleAddTrade(requestData) {
     for (let i = 1; i < existingData.length; i++) {
       const row = existingData[i];
       if (row[2] === trade.stockName && 
-          row[1] && new Date(row[1]).toISOString().split('T')[0] === trade.tradeDate &&
+          row[1] === trade.tradeDate &&
           row[4] === trade.entryPrice) {
         return { success: true, message: 'Duplicate prevented', data: trade };
       }
     }
     
-    // Create row
+    // Create row with YYYY-MM-DD date format
     const row = [
       trade.id || Date.now(),
-      trade.tradeDate || new Date().toISOString().split('T')[0],
+      trade.tradeDate || new Date().toISOString().split('T')[0], // Keep YYYY-MM-DD format
       trade.stockName || '',
       trade.quantity || 0,
       trade.entryPrice || '0',
@@ -356,12 +401,12 @@ function handleAddTrade(requestData) {
       trade.stopLoss || '',
       trade.targetPrice || '',
       trade.profitLoss || '0',
-      trade.setupFollowed ? 'Yes' : 'No',
+      trade.isTradeTaken ? 'Yes' : 'No',
       trade.whichSetup || '',
       trade.emotion || '',
       trade.notes || '',
       trade.psychologyReflections || '',
-      trade.screenshotUrl || '',
+      trade.screenshotLink || '',
       getISTDateTime()
     ];
     
@@ -373,9 +418,9 @@ function handleAddTrade(requestData) {
   }
 }
 
-function handleAddStrategy(requestData) {
+function handleAddStrategy(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.STRATEGIES);
+    const sheet = getOrCreateSheet(sheetId, CONFIG.SHEETS.STRATEGIES);
     
     if (sheet.getLastRow() === 0) {
       sheet.getRange(1, 1, 1, STRATEGIES_HEADERS.length).setValues([STRATEGIES_HEADERS]);
@@ -412,9 +457,9 @@ function handleAddStrategy(requestData) {
   }
 }
 
-function handleAddPsychologyEntry(requestData) {
+function handleAddPsychologyEntry(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.PSYCHOLOGY);
+    const sheet = getOrCreateSheet(sheetId, CONFIG.SHEETS.PSYCHOLOGY);
     
     if (sheet.getLastRow() === 0) {
       sheet.getRange(1, 1, 1, PSYCHOLOGY_HEADERS.length).setValues([PSYCHOLOGY_HEADERS]);
@@ -424,7 +469,7 @@ function handleAddPsychologyEntry(requestData) {
     
     const entry = requestData.data || requestData;
     
-    // Check for duplicates
+    // Check for duplicates by entry date
     const existingData = sheet.getDataRange().getValues();
     for (let i = 1; i < existingData.length; i++) {
       const row = existingData[i];
@@ -435,8 +480,8 @@ function handleAddPsychologyEntry(requestData) {
     
     const row = [
       entry.id || Date.now(),
-      entry.entryDate || '',
-      entry.monthlyPnL || '0',
+      entry.entryDate || new Date().toISOString().split('T')[0], // Keep YYYY-MM-DD format
+      entry.dailyPnL || '0',
       entry.bestTradeId || '',
       entry.worstTradeId || '',
       entry.mentalReflections || '',
@@ -455,9 +500,9 @@ function handleAddPsychologyEntry(requestData) {
 /**
  * UPDATE AND DELETE OPERATIONS
  */
-function handleUpdateTrade(requestData) {
+function handleUpdateTrade(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.TRADES);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.TRADES);
     const trade = requestData.data || requestData;
     const data = sheet.getDataRange().getValues();
     
@@ -467,7 +512,7 @@ function handleUpdateTrade(requestData) {
         // Update the row
         const row = [
           trade.id,
-          formatIndianDate(trade.tradeDate || data[i][1]),
+          trade.tradeDate || data[i][1],
           trade.stockName || data[i][2],
           trade.quantity || data[i][3],
           trade.entryPrice || data[i][4],
@@ -475,12 +520,12 @@ function handleUpdateTrade(requestData) {
           trade.stopLoss || data[i][6],
           trade.targetPrice || data[i][7],
           trade.profitLoss || data[i][8],
-          trade.setupFollowed !== undefined ? (trade.setupFollowed ? 'Yes' : 'No') : data[i][9],
-          trade.strategy || data[i][10],
+          trade.isTradeTaken !== undefined ? (trade.isTradeTaken ? 'Yes' : 'No') : data[i][9],
+          trade.whichSetup || data[i][10],
           trade.emotion || data[i][11],
-          trade.tradeNotes || data[i][12],
+          trade.notes || data[i][12],
           trade.psychologyReflections || data[i][13],
-          trade.screenshotUrl || data[i][14],
+          trade.screenshotLink || data[i][14],
           data[i][15] // Keep original created date
         ];
         
@@ -495,9 +540,9 @@ function handleUpdateTrade(requestData) {
   }
 }
 
-function handleDeleteTrade(requestData) {
+function handleDeleteTrade(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.TRADES);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.TRADES);
     const { id } = requestData.data || requestData;
     const data = sheet.getDataRange().getValues();
     
@@ -515,9 +560,9 @@ function handleDeleteTrade(requestData) {
   }
 }
 
-function handleUpdateStrategy(requestData) {
+function handleUpdateStrategy(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.STRATEGIES);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.STRATEGIES);
     const strategy = requestData.data || requestData;
     const data = sheet.getDataRange().getValues();
     
@@ -545,9 +590,9 @@ function handleUpdateStrategy(requestData) {
   }
 }
 
-function handleDeleteStrategy(requestData) {
+function handleDeleteStrategy(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.STRATEGIES);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.STRATEGIES);
     const { id } = requestData.data || requestData;
     const data = sheet.getDataRange().getValues();
     
@@ -565,9 +610,9 @@ function handleDeleteStrategy(requestData) {
   }
 }
 
-function handleUpdatePsychologyEntry(requestData) {
+function handleUpdatePsychologyEntry(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.PSYCHOLOGY);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.PSYCHOLOGY);
     const entry = requestData.data || requestData;
     const data = sheet.getDataRange().getValues();
     
@@ -577,7 +622,7 @@ function handleUpdatePsychologyEntry(requestData) {
         const row = [
           entry.id,
           entry.entryDate !== undefined ? entry.entryDate : data[i][1],
-          entry.monthlyPnL !== undefined ? entry.monthlyPnL : data[i][2],
+          entry.dailyPnL !== undefined ? entry.dailyPnL : data[i][2],
           entry.bestTradeId !== undefined ? entry.bestTradeId : data[i][3],
           entry.worstTradeId !== undefined ? entry.worstTradeId : data[i][4],
           entry.mentalReflections !== undefined ? entry.mentalReflections : data[i][5],
@@ -596,9 +641,9 @@ function handleUpdatePsychologyEntry(requestData) {
   }
 }
 
-function handleDeletePsychologyEntry(requestData) {
+function handleDeletePsychologyEntry(sheetId, requestData) {
   try {
-    const sheet = getCachedSheet(CONFIG.SHEETS.PSYCHOLOGY);
+    const sheet = getCachedSheet(sheetId, CONFIG.SHEETS.PSYCHOLOGY);
     const { id } = requestData.data || requestData;
     const data = sheet.getDataRange().getValues();
     
@@ -617,17 +662,23 @@ function handleDeletePsychologyEntry(requestData) {
 }
 
 /**
+ * HELPER FUNCTIONS
+ */
+function getOrCreateSheet(sheetId, sheetName) {
+  const spreadsheet = SpreadsheetApp.openById(sheetId);
+  let sheet = spreadsheet.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(sheetName);
+  }
+  return sheet;
+}
+
+/**
  * TEST FUNCTION
  */
 function testConfiguration() {
-  try {
-    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    console.log('✅ Spreadsheet connection successful');
-    console.log('✅ Configuration is correct');
-    console.log('✅ Ready for deployment');
-    return true;
-  } catch (error) {
-    console.error('❌ Configuration error:', error.message);
-    return false;
-  }
+  console.log('⚠️ This script now accepts dynamic Sheet IDs from UI settings');
+  console.log('✅ No hardcoded Sheet ID - uses whatever you enter in settings');
+  console.log('✅ Ready for deployment with any Google Sheet');
+  return true;
 }

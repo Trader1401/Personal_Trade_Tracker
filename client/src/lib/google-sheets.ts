@@ -36,7 +36,8 @@ export class GoogleSheetsAPI {
           const script = document.createElement('script');
           const params = new URLSearchParams({
             action,
-            data: JSON.stringify(data || {}),
+            data: JSON.stringify({ ...data, sheetId: this.sheetId }),
+            sheetId: this.sheetId,
             callback: callbackName
           });
           
@@ -69,7 +70,8 @@ export class GoogleSheetsAPI {
           },
           body: JSON.stringify({
             action,
-            data,
+            data: { ...data, sheetId: this.sheetId },
+            sheetId: this.sheetId,
           }),
         });
 

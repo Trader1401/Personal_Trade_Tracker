@@ -6,7 +6,7 @@ import { useAppContext } from '@/contexts/app-context';
 export interface PsychologyEntry {
   id: number;
   entryDate: string;
-  monthlyPnL: string | null;
+  dailyPnL: string | null;
   bestTradeId: number | null;
   worstTradeId: number | null;  
   mentalReflections: string;
@@ -17,7 +17,7 @@ export interface PsychologyEntry {
 // Insert schema type
 export interface InsertPsychologyEntry {
   entryDate: string;
-  monthlyPnL?: string;
+  dailyPnL?: string;
   bestTradeId?: number;
   worstTradeId?: number;
   mentalReflections: string;

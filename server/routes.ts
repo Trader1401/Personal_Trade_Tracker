@@ -17,9 +17,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Sheets proxy endpoint to avoid CORS issues
   app.post("/api/google-sheets", async (req, res) => {
     try {
-      const { action, data } = req.body;
+      const { action, data, sheetId } = req.body;
       
-      console.log('Google Sheets API call:', { action, hasData: !!data });
+      console.log('Google Sheets API call:', { action, hasData: !!data, hasSheetId: !!sheetId });
       
       // Get current settings to configure Google Sheets client
       const settings = await storage.getSettings();
@@ -36,12 +36,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Use sheetId from request or fallback to settings
+      const targetSheetId = sheetId || settings.googleSheetId;
+      if (!targetSheetId) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Google Sheet ID not configured. Please update settings." 
+        });
+      }
+
       googleSheetsClient.setScriptUrl(settings.googleScriptUrl);
 
       let result;
       switch (action) {
         case 'test':
-          result = await googleSheetsClient.testConnection();
+          result = await googleSheetsClient.testConnection(targetSheetId);
           break;
         case 'getTrades':
           // Return local trades for simplicity - Google Sheets integration working for sync
@@ -69,7 +78,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const response = await (googleSheetsClient as any).makeRequest({
               action: 'addTrade',
-              data: trade
+              data: trade,
+              sheetId: targetSheetId
             });
             console.log('Trade synced to Google Sheets:', response.success);
           } catch (syncError) {

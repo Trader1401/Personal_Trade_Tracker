@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Search, Filter, Calendar, Download, FileDown, X, Eye } from "lucide-react";
+import { Plus, Search, Filter, Calendar, Download, FileDown, X, Eye, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -670,9 +670,11 @@ export default function TradeLogEnhanced() {
                       <TableHead>Exit</TableHead>
                       <TableHead>P&L</TableHead>
                       <TableHead>P&L %</TableHead>
+                      <TableHead>Trade Taken</TableHead>
                       <TableHead>Strategy</TableHead>
                       <TableHead>Emotion</TableHead>
                       <TableHead>Notes</TableHead>
+                      <TableHead>Chart</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>

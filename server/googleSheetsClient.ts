@@ -43,7 +43,7 @@ export class GoogleSheetsClient {
   /**
    * Test connection to Google Sheets
    */
-  async testConnection(): Promise<ConnectionTestResponse> {
+  async testConnection(sheetId?: string): Promise<ConnectionTestResponse> {
     if (!this.scriptUrl) {
       return {
         success: false,
@@ -54,7 +54,8 @@ export class GoogleSheetsClient {
 
     try {
       const response = await this.makeRequest({
-        action: 'test'
+        action: 'test',
+        sheetId: sheetId
       });
 
       return response;
@@ -182,7 +183,7 @@ export class GoogleSheetsClient {
   /**
    * Make HTTP request to Google Apps Script
    */
-  private async makeRequest(data: any): Promise<any> {
+  private async makeRequest(data: any, sheetId?: string): Promise<any> {
     if (!this.scriptUrl) {
       throw new Error('Script URL not configured');
     }
@@ -196,7 +197,7 @@ export class GoogleSheetsClient {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, sheetId }),
         signal: controller.signal
       });
 
