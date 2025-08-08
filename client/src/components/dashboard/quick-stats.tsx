@@ -84,8 +84,8 @@ export default function QuickStats() {
         <div className="space-y-4">
           {stats.map((stat, index) => (
             <div key={index} className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">{stat.label}</span>
-              <span className={`font-semibold ${stat.color || 'text-gray-900'}`}>
+              <span className="text-sm text-gray-600 dark:text-gray-300">{stat.label}</span>
+              <span className={`font-semibold ${stat.color || 'text-gray-900 dark:text-gray-100'}`}>
                 {stat.value}
               </span>
             </div>
@@ -95,8 +95,8 @@ export default function QuickStats() {
         {/* Progress Bar */}
         <div className="mt-6">
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-gray-600">Monthly Target</span>
-            <span className="text-gray-900">{Math.round(targetProgress)}%</span>
+            <span className="text-gray-600 dark:text-gray-300">Monthly Target</span>
+            <span className="text-gray-900 dark:text-gray-100">{Math.round(targetProgress)}%</span>
           </div>
           <Progress value={targetProgress} className="h-2" />
         </div>

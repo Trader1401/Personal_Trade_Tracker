@@ -104,6 +104,27 @@
     color: var(--foreground) !important;
   }
 
+  /* Ensure all text is visible in dark mode */
+  .dark .text-gray-900 {
+    color: hsl(0, 0%, 98%) !important;
+  }
+  
+  .dark .text-gray-700 {
+    color: hsl(0, 0%, 85%) !important;
+  }
+  
+  .dark .text-gray-600 {
+    color: hsl(0, 0%, 70%) !important;
+  }
+  
+  .dark .text-gray-500 {
+    color: hsl(0, 0%, 60%) !important;
+  }
+  
+  .dark .text-gray-400 {
+    color: hsl(0, 0%, 50%) !important;
+  }
+
   /* Calendar icon visibility fix for dark mode */
   .dark .lucide-calendar {
     color: white !important;

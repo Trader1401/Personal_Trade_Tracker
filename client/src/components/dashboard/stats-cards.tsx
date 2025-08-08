@@ -86,8 +86,8 @@ export default function StatsCards() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className={`text-2xl font-bold ${stat.valueColor}`}>{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.change}</p>
+                  <p className={`text-2xl font-bold ${stat.valueColor} dark:text-gray-100`}>{stat.value}</p>
+                  <p className="text-xs text-muted-foreground dark:text-gray-400">{stat.change}</p>
                 </div>
                 <div className={`w-12 h-12 ${stat.iconBg} dark:bg-opacity-20 rounded-lg flex items-center justify-center transition-colors duration-300`}>
                   <Icon className={`w-6 h-6 ${stat.iconColor}`} />

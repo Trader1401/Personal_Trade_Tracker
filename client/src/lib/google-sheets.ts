@@ -36,7 +36,7 @@ export class GoogleSheetsAPI {
           const script = document.createElement('script');
           const params = new URLSearchParams({
             action,
-            data: JSON.stringify({ ...data, sheetId: this.sheetId }),
+            data: JSON.stringify(data),
             sheetId: this.sheetId,
             callback: callbackName
           });

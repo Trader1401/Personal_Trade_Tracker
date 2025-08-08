@@ -86,7 +86,7 @@ export default function StrategyPerformance() {
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-gray-900">{strategy.name}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{strategy.name}</h3>
                     <Badge 
                       variant={strategy.status === "active" ? "default" : strategy.status === "testing" ? "secondary" : "destructive"}
                     >
@@ -96,15 +96,15 @@ export default function StrategyPerformance() {
                   
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Trades</span>
-                      <span className="text-sm font-medium">{stats.trades}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Trades</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{stats.trades}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Win Rate</span>
-                      <span className="text-sm font-medium">{formatPercentage(stats.winRate)}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Win Rate</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatPercentage(stats.winRate)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">P&L</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">P&L</span>
                       <span className={`text-sm font-medium ${stats.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                         {formatCurrency(stats.pnl)}
                       </span>

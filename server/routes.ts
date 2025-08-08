@@ -142,11 +142,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test Google Sheets connection endpoint  
   app.post("/api/test-google-connection", async (req, res) => {
     try {
+      const { googleSheetId, googleScriptUrl } = req.body;
       const settings = await storage.getSettings();
-      if (!settings?.googleScriptUrl) {
+      
+      const scriptUrl = googleScriptUrl || settings?.googleScriptUrl;
+      const sheetId = googleSheetId || settings?.googleSheetId;
+      
+      if (!scriptUrl) {
         return res.status(400).json({ 
           success: false,
           error: "Google Script URL not configured" 
+        });
+      }
+      
+      if (!sheetId) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Google Sheet ID not configured" 
         });
       }
 
@@ -446,10 +458,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(settings.googleScriptUrl, {
+      const response = await fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'test' }),
+        body: JSON.stringify({ action: 'test', sheetId: sheetId }),
         signal: controller.signal
       });
 

@@ -127,11 +127,11 @@ export default function EmotionAnalysisChart({ trades }: EmotionAnalysisChartPro
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
             {emotionData.slice(0, 4).map((emotion) => (
               <div key={emotion.emotion} className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{emotion.emotion}</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-300">{emotion.emotion}</p>
                 <p className={`text-sm font-bold ${emotion.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(emotion.pnl)}
                 </p>
-                <p className="text-xs text-gray-500">{emotion.trades} trades</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{emotion.trades} trades</p>
               </div>
             ))}
           </div>

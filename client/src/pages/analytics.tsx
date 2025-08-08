@@ -396,13 +396,13 @@ export default function Analytics() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <p className="text-sm text-green-600 dark:text-green-400">Max Win Streak</p>
+                    <p className="text-sm text-green-600 dark:text-green-400 font-medium">Best Trade</p>
                     <p className="text-2xl font-bold text-green-700 dark:text-green-300">
                       {maxConsecutiveWins}
                     </p>
                   </div>
                   <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <p className="text-sm text-red-600 dark:text-red-400">Max Loss Streak</p>
+                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">Max Loss Streak</p>
                     <p className="text-2xl font-bold text-red-700 dark:text-red-300">
                       {maxConsecutiveLosses}
                     </p>
@@ -410,14 +410,14 @@ export default function Analytics() {
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Average Trade Size</p>
-                    <p className="text-lg font-bold">{formatCurrency(avgTradeSize)}</p>
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Average Trade Size</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(avgTradeSize)}</p>
                   </div>
                   
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Sharpe Ratio</p>
-                    <p className="text-lg font-bold">{sharpeRatio.toFixed(2)}</p>
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Sharpe Ratio</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{sharpeRatio.toFixed(2)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -454,7 +454,7 @@ export default function Analytics() {
                       <td className="py-3 px-4 font-medium">{item.strategy}</td>
                       <td className="py-3 px-4">{item.trades}</td>
                       <td className="py-3 px-4">{formatPercentage(item.winRate)}</td>
-                      <td className={`py-3 px-4 font-medium ${item.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                      <td className={`py-3 px-4 font-medium ${item.pnl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {formatCurrency(item.pnl)}
                       </td>
                     </tr>
@@ -475,23 +475,23 @@ export default function Analytics() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">Winning Trades</span>
+                <span className="text-gray-600 dark:text-gray-300">Winning Trades</span>
                 <span className="font-medium text-profit">
                   {winningTrades.length}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Losing Trades</span>
+                <span className="text-gray-600 dark:text-gray-300">Losing Trades</span>
                 <span className="font-medium text-loss">
                   {losingTrades.length}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Average Win</span>
+                <span className="text-gray-600 dark:text-gray-300">Average Win</span>
                 <span className="font-medium text-profit">{formatCurrency(avgWin)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Average Loss</span>
+                <span className="text-gray-600 dark:text-gray-300">Average Loss</span>
                 <span className="font-medium text-loss">{formatCurrency(avgLoss)}</span>
               </div>
             </div>
@@ -505,21 +505,21 @@ export default function Analytics() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">Total Trades</span>
+                <span className="text-gray-600 dark:text-gray-300">Total Trades</span>
                 <span className="font-medium">{filteredTrades.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Profit Factor</span>
+                <span className="text-gray-600 dark:text-gray-300">Profit Factor</span>
                 <span className={`font-medium ${profitFactor >= 1.5 ? 'text-profit' : profitFactor >= 1 ? 'text-warning' : 'text-loss'}`}>
                   {profitFactor.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Max Drawdown</span>
+                <span className="text-gray-600 dark:text-gray-300">Max Drawdown</span>
                 <span className="font-medium text-loss">{formatCurrency(maxDrawdown)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Best Trade</span>
+                <span className="text-gray-600 dark:text-gray-300">Best Trade</span>
                 <span className="font-medium text-profit">
                   {bestTrade ? formatCurrency(parseFloat(bestTrade.profitLoss?.toString() || "0")) : "N/A"}
                 </span>

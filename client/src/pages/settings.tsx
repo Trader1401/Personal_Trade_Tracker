@@ -52,10 +52,10 @@ export default function Settings() {
   const testConnection = async () => {
     const formData = form.getValues();
     
-    if (!formData.googleScriptUrl) {
+    if (!formData.googleScriptUrl || !formData.googleSheetId) {
       toast({
         title: "Error",
-        description: "Please enter a Google Script URL first",
+        description: "Please enter both Google Sheet ID and Script URL",
         variant: "destructive",
       });
       return;
@@ -86,7 +86,8 @@ export default function Settings() {
           const script = document.createElement('script');
           const params = new URLSearchParams({
             action: "test",
-            data: JSON.stringify({}),
+            data: JSON.stringify({ sheetId: formData.googleSheetId }),
+            sheetId: formData.googleSheetId,
             callback: callbackName
           });
           
@@ -128,6 +129,10 @@ export default function Settings() {
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            googleSheetId: formData.googleSheetId,
+            googleScriptUrl: formData.googleScriptUrl
+          }),
         });
 
         if (response.ok) {

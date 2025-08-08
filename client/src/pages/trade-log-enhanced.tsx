@@ -720,19 +720,19 @@ export default function TradeLogEnhanced() {
                               {trade.isTradeTaken ? "Yes" : "No"}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-visible">
                             {trade.whichSetup ? (
                               <Badge variant="outline">{trade.whichSetup}</Badge>
                             ) : "-"}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-visible">
                             {trade.emotion ? (
                               <Badge variant="secondary">{trade.emotion}</Badge>
                             ) : "-"}
                           </TableCell>
-                          <TableCell className="max-w-[200px]">
+                          <TableCell className="max-w-[200px] text-visible">
                             {trade.notes ? (
-                              <div className="truncate" title={trade.notes}>
+                              <div className="truncate text-visible" title={trade.notes}>
                                 {trade.notes}
                               </div>
                             ) : "-"}
