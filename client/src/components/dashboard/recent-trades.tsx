@@ -102,7 +102,7 @@ export default function RecentTrades() {
                       <span className="text-blue-600 font-bold text-sm">{stockSymbol}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{trade.stockName}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{trade.stockName}</p>
                       <p className="text-sm text-gray-500">
                         {new Date(trade.tradeDate).toLocaleDateString()} • {trade.quantity} shares
                       </p>

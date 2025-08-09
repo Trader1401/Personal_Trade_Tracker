@@ -106,23 +106,47 @@
 
   /* Ensure all text is visible in dark mode */
   .dark .text-gray-900 {
-    color: hsl(0, 0%, 98%) !important;
+    color: hsl(0, 0%, 95%) !important;
   }
   
   .dark .text-gray-700 {
-    color: hsl(0, 0%, 85%) !important;
+    color: hsl(0, 0%, 90%) !important;
   }
   
   .dark .text-gray-600 {
-    color: hsl(0, 0%, 70%) !important;
+    color: hsl(0, 0%, 80%) !important;
   }
   
   .dark .text-gray-500 {
-    color: hsl(0, 0%, 60%) !important;
+    color: hsl(0, 0%, 70%) !important;
   }
   
   .dark .text-gray-400 {
-    color: hsl(0, 0%, 50%) !important;
+    color: hsl(0, 0%, 60%) !important;
+  }
+
+  /* Fix muted text in dark mode */
+  .dark .text-muted-foreground {
+    color: hsl(0, 0%, 70%) !important;
+  }
+
+  /* Ensure form labels are visible */
+  .dark label {
+    color: hsl(0, 0%, 90%) !important;
+  }
+
+  /* Fix card titles and content */
+  .dark .text-card-foreground {
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  /* Fix table text visibility */
+  .dark td {
+    color: hsl(0, 0%, 90%) !important;
+  }
+
+  .dark th {
+    color: hsl(0, 0%, 85%) !important;
   }
 
   /* Calendar icon visibility fix for dark mode */

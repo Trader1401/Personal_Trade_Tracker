@@ -143,10 +143,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/test-google-connection", async (req, res) => {
     try {
       const { googleSheetId, googleScriptUrl } = req.body;
+      
+      console.log('Test connection request:', { 
+        hasSheetId: !!googleSheetId, 
+        hasScriptUrl: !!googleScriptUrl,
+        sheetId: googleSheetId,
+        scriptUrl: googleScriptUrl 
+      });
+      
       const settings = await storage.getSettings();
       
       const scriptUrl = googleScriptUrl || settings?.googleScriptUrl;
       const sheetId = googleSheetId || settings?.googleSheetId;
+      
+      console.log('Final values for test:', { 
+        finalScriptUrl: scriptUrl, 
+        finalSheetId: sheetId 
+      });
       
       if (!scriptUrl) {
         return res.status(400).json({ 
@@ -162,21 +175,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Validate settings and report status
-      const trades = await storage.getTrades();
-      const strategies = await storage.getStrategies();
+      // Test the actual connection to Google Apps Script
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(scriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            action: 'test',
+            sheetId: sheetId
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          res.json({
+            success: true,
+            message: "Connection successful - Google Sheets integration working!",
+            spreadsheetName: result.spreadsheetName,
+            scriptUrl: scriptUrl,
+            sheetId: sheetId,
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          throw new Error(result.error || 'Connection test failed');
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          throw new Error('Connection timeout - Google Sheets took too long to respond');
+        }
+        
+        throw fetchError;
+      }
       
-      res.json({
-        success: true,
-        message: "Connection successful - All sheets ready for data sync!",
-        scriptUrl: settings.googleScriptUrl,
-        sheetId: settings.googleSheetId,
-        backendStatus: "Backend proxy working (CORS issues resolved)",
-        dataCount: `${trades.length} trades, ${strategies.length} strategies ready`,
-        integrationStatus: "Ready for real-time data synchronization",
-        timestamp: new Date().toISOString()
-      });
     } catch (error) {
+      console.error('Test connection error:', error);
       res.status(500).json({ 
         success: false,
         error: error instanceof Error ? error.message : 'Connection test failed' 

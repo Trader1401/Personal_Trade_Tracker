@@ -29,7 +29,7 @@ const tradeSchema = z.object({
   exitPrice: z.coerce.number().optional(),
   stopLoss: z.coerce.number().optional(),
   targetPrice: z.coerce.number().optional(),
-  setupFollowed: z.boolean().default(false),
+  isTradeTaken: z.boolean().default(false),
   whichSetup: z.string().optional(),
   emotion: z.string().optional(),
   notes: z.string().optional(),
@@ -73,7 +73,7 @@ export default function TradeLogEnhanced() {
       exitPrice: 0,
       stopLoss: 0,
       targetPrice: 0,
-      setupFollowed: false,
+      isTradeTaken: false,
       whichSetup: "",
       emotion: "",
       notes: "",
@@ -110,7 +110,7 @@ export default function TradeLogEnhanced() {
       stopLoss: data.stopLoss?.toString() || null,
       targetPrice: data.targetPrice?.toString() || null,
       profitLoss: profitLoss.toString(),
-      setupFollowed: data.setupFollowed,
+      isTradeTaken: data.isTradeTaken,
       whichSetup: data.whichSetup || null,
       emotion: data.emotion || null,
       notes: data.notes || null,
@@ -390,6 +390,32 @@ export default function TradeLogEnhanced() {
                       )}
                     />
                   </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="isTradeTaken"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center space-x-2">
+                          <span>Did I take this trade?</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={(e) => field.onChange(e.target.checked)}
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-300">
+                              {field.value ? "Yes, I took this trade" : "No, I didn't take this trade"}
+                            </span>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={form.control}
